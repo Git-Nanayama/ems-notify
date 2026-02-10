@@ -144,7 +144,7 @@ if __name__ == "__main__":
     # 宛先リストの読み込み
     recipients_list = []
     try:
-        with open("ems-notify/emails.csv", "r", encoding="utf-8") as f:
+        with open("emails.csv", "r", encoding="utf-8") as f:
             reader = csv.reader(f)
             for row in reader:
                 if row:
