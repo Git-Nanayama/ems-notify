@@ -7,6 +7,7 @@ from email.mime.text import MIMEText
 from email.header import Header
 import json
 import time
+import re
 
 # --- 設定 ---
 # 監視対象の国・地域リスト（日本語名 -> 中国語名）
@@ -72,7 +73,7 @@ def convert_html_table_to_markdown(table):
         if not cells:
             continue
         parts = [cell.get_text(separator=' ', strip=True) for cell in cells]
-        line = '| ' + ' | '.join(parts) + ' |'
+        line = '| ' + ' | '.join(parts) + ' |
         lines.append(line)
         # add separator after header row if th present
         if i == 0 and table.find('th'):
@@ -91,7 +92,7 @@ def convert_text_table_to_markdown(text):
         if '|' in s:
             parts = [p.strip() for p in s.split('|') if p.strip()]
         else:
-            parts = [p.strip() for p in __import__('re').split(r'\\s{2,}', s) if p.strip()]
+            parts = [p.strip() for p in re.split(r'\s{2,}', s) if p.strip()]
         if parts:
             lines.append('| ' + ' | '.join(parts) + ' |')
     return '\n'.join(lines) if lines else None
