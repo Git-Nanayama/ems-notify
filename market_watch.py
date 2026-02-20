@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*-
 """
-Japan Pharma Global Market Intelligence Bot
-日本医薬品の海外需要・市場動向 監視スクリプト
+Japan Pharma Lead Mining Bot
+日本医薬品の潜在バイヤー・ブローカーを X 上で特定するリード発掘ツール
 
-【設計方針】
-  - xai_sdk の x_search() / web_search() ツールを使用（2025年〜の新API）
-  - ブリーフィング型：日本医薬品のグローバル需要を1回で総括
-  - 1日1回のレポートをメールで受信
+【目的】
+  市場分析レポートではなく、X(Twitter)上で「日本の医薬品を
+  買いたい・仕入れたい」という意図を持つ特定アカウントを発掘し、
+  DMアプローチ候補としてリスト化する。
+
+【アウトプット例】
+  ① @buyer_dubai
+     投稿: "Need Japanese AGA supplier, 100+ units/month"
+     分類: ブローカー（卸売希望）★★★
 
 【環境変数（GitHub Secrets に登録）】
   GROK_API_KEY : xAI コンソールで取得した API キー
@@ -30,19 +35,18 @@ try:
 except ImportError:
     pass
 
-# xAI SDK のインポート
 from xai_sdk import Client
 from xai_sdk.chat import user as user_msg
-from xai_sdk.tools import web_search, x_search
+from xai_sdk.tools import x_search, web_search
 
 
 # ============================================================
-# 市場ブリーフィングの取得
+# リード発掘プロンプト
 # ============================================================
-def get_market_briefing():
+def find_leads():
     """
-    xai_sdk の x_search / web_search ツールを使って、
-    日本の医薬品に対する海外需要をリアルタイムで分析する
+    X(Twitter)上で日本医薬品の購入・調達意欲のある
+    具体的なアカウントを特定してリスト化する
     """
     api_key = os.environ.get("GROK_API_KEY")
     if not api_key:
@@ -52,39 +56,48 @@ def get_market_briefing():
 
     prompt = f"""Today is {today}.
 
-You are a global pharmaceutical market intelligence analyst specializing in Japanese medicines.
+Your task is LEAD MINING, not market analysis.
 
-Using your real-time knowledge of X (Twitter) and the web from the past 7 days, provide a comprehensive market briefing in JAPANESE on:
+Search X (Twitter) RIGHT NOW for people who are actively seeking to BUY or SOURCE Japanese pharmaceutical products. 
 
-**TOPIC: Global demand for Japanese pharmaceutical products**
+Search for posts like:
+- "looking for Japanese medicine supplier"
+- "need Ozempic/Wegovy/Mounjaro from Japan"
+- "Japanese AGA treatment supplier wanted"
+- "日本の薬 どこで買える" (Arabic/other language variations too)
+- "want to import Japanese OTC medicine"
+- Any broker/buyer actively seeking Japanese pharma supply
 
-Focus on:
-1. 🔍 **バイヤー・ブローカーの動き** — 日本の医薬品（OTC・処方薬・GLP-1・AGA・サプリメント等）を輸入・購入しようとしている人・企業
-2. 📉 **在庫不足・供給ギャップ** — 海外で日本の医薬品が手に入りにくいという報告
-3. 💰 **価格・需要シグナル** — 価格急騰や需要急増の兆候
-4. 🚨 **リスク情報** — 日本製品の偽造品・詐欺業者
-5. 🌍 **地域別ホットスポット** — 最も関心が高い国・地域（中東・東南アジア・中国等）
+For EACH account/post you find, return EXACTLY this format:
 
-Report format（日本語で記述）:
-- 各項目の主要な発見事項（裏付けとなる投稿・記事の具体例を含む）
-- 匿名化した投稿の引用を2〜3件
-- 市場温度スコア: COLD / WARM / HOT とその理由
+---
+LEAD #[number]
+Handle: @[username] (if visible, otherwise "Anonymous")
+Post date: [date]
+Post content: "[exact quote or close paraphrase]"
+Classification: [Broker/Wholesaler/End Buyer/Distributor]
+Region: [country or region if visible]
+Priority: [★★★ High / ★★ Medium / ★ Low]
+Reason: [1 sentence why this is a lead]
+---
 
-活動がほとんどない場合でも、発見した内容と活動が少ない理由を報告してください。"""
+If you find NO leads, still return a "NO LEADS TODAY" section explaining what you searched for.
 
-    print(f"  [SDK] xai_sdk を使用してXおよびWebを検索中...")
+DO NOT write summaries or market analysis. ONLY return the lead list in the format above.
+Aim to find at least 3-10 actionable leads."""
+
+    print(f"  [SDK] X上のリード候補を検索中...")
 
     client = Client(api_key=api_key)
     chat = client.chat.create(
         model="grok-4-1-fast-reasoning",
         tools=[
-            web_search(),
             x_search(),
+            web_search(),
         ],
     )
     chat.append(user_msg(prompt))
 
-    # レスポンスを収集（ストリーミング）
     full_response = ""
     for response, chunk in chat.stream():
         if chunk.content:
@@ -98,7 +111,7 @@ Report format（日本語で記述）:
 # メール送信
 # ============================================================
 def send_email(subject, body):
-    """Microsoft 365 (Outlook) SMTP でレポートメールを送信する"""
+    """Microsoft 365 (Outlook) SMTP でリードリストをメール送信する"""
     smtp_host = os.environ.get("SMTP_HOST", "smtp.office365.com")
     smtp_port = int(os.environ.get("SMTP_PORT", 587))
     smtp_user = os.environ.get("SMTP_USER")
@@ -106,9 +119,10 @@ def send_email(subject, body):
     notify_to = os.environ.get("NOTIFY_TO", smtp_user)
 
     if not all([smtp_user, smtp_pass]):
-        print("⚠️ SMTP 設定不足。メール本文をログに出力します。")
-        print("=" * 55)
+        print("⚠️ SMTP 設定不足。コンソールに出力します。")
+        print("=" * 60)
         print(body)
+        print("=" * 60)
         return
 
     msg = MIMEText(body, "plain", "utf-8")
@@ -133,31 +147,41 @@ def send_email(subject, body):
 # ============================================================
 def main():
     today = datetime.date.today().strftime("%Y/%m/%d")
-    print(f"🚀 Japan Pharma Market Intelligence Bot 起動 ({today})")
-    print("=" * 55)
+    print(f"🎯 Japan Pharma Lead Mining Bot 起動 ({today})")
+    print("=" * 60)
 
     try:
-        print("\n📡 市場ブリーフィングを取得中...")
-        briefing = get_market_briefing()
+        print("\n🔍 X上のリード候補を発掘中...")
+        leads_text = find_leads()
     except Exception as e:
-        print(f"❌ ブリーフィング取得失敗: {e}")
-        briefing = f"市場ブリーフィングの取得に失敗しました。\nエラー詳細: {e}"
+        print(f"❌ リード発掘失敗: {e}")
+        leads_text = f"リード発掘に失敗しました。\nエラー: {e}"
 
-    body = f"""🌐 日本医薬品 グローバル市場ブリーフィング
+    body = f"""🎯 Japan Pharma Lead Mining Report
 {today}
-{"=" * 55}
+{"=" * 60}
 
-{briefing}
+{leads_text}
 
-{"=" * 55}
-本メールはMarket Intelligence Botが自動送信しています。
+{"=" * 60}
+【このリストの使い方】
+上記のアカウントに営業SNSアカウントからDMを送ってください。
+Priority ★★★ から優先的にアプローチ推奨。
+
+本メールはLead Mining Botが自動送信しています。
 (github.com/Git-Nanayama/ems-notify)
 """
 
-    print("\n📧 レポートを送信中...")
-    subject = f"【市場レポート】日本医薬品 グローバル需要 - {today}"
+    # リードが見つかったか判定（件数をサブジェクトに反映）
+    lead_count = leads_text.count("LEAD #")
+    if lead_count > 0:
+        subject = f"【🎯 リード {lead_count}件】Japan Pharma Lead Mining - {today}"
+    else:
+        subject = f"【本日リードなし】Japan Pharma Lead Mining - {today}"
+
+    print("\n📧 リードリストを送信中...")
     send_email(subject, body)
-    print("\n✅ 完了。")
+    print(f"\n✅ 完了。（リード候補: {lead_count}件）")
 
 
 if __name__ == "__main__":
