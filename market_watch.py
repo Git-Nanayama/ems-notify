@@ -90,27 +90,94 @@ Write ONLY the table and a brief introduction. No long analysis."""
     return full_response
 
 
+def convert_markdown_to_html(text):
+    """
+    簡易的な Markdown -> HTML 変換。
+    特に Markdown テーブルを HTML テーブルに変換する。
+    """
+    lines = text.strip().split('\n')
+    html_output = []
+    in_table = False
+    table_lines = []
+
+    for line in lines:
+        if '|' in line and '---' not in line:
+            if not in_table:
+                in_table = True
+                table_lines = [line]
+            else:
+                table_lines.append(line)
+        elif '---' in line and '|' in line:
+            # テーブルの区切り行は無視
+            continue
+        else:
+            if in_table:
+                # テーブル終了、変換して追加
+                html_output.append(render_html_table(table_lines))
+                in_table = False
+                table_lines = []
+            html_output.append(f"<p>{line}</p>")
+    
+    if in_table:
+        html_output.append(render_html_table(table_lines))
+
+    return "".join(html_output)
+
+def render_html_table(lines):
+    """Markdownの行リストをHTMLテーブルに変換"""
+    html = ['<table border="1" style="border-collapse: collapse; width: 100%; font-family: sans-serif;">']
+    for i, line in enumerate(lines):
+        cells = [c.strip() for c in line.split('|') if c.strip()]
+        tag = 'th' if i == 0 else 'td'
+        bg = 'background-color: #f2f2f2;' if i == 0 else ''
+        html.append('  <tr>')
+        for cell in cells:
+            html.append(f'    <{tag} style="border: 1px solid #ddd; padding: 8px; {bg}">{cell}</{tag}>')
+        html.append('  </tr>')
+    html.append('</table>')
+    return "".join(html)
+
+
 # ============================================================
 # メール送信
 # ============================================================
-def send_email(subject, body):
-    """Microsoft 365 (Outlook) SMTP でレポートを送信"""
+def send_email(subject, body_markdown):
+    """Microsoft 365 (Outlook) SMTP で HTML レポートを送信"""
     smtp_host = os.environ.get("SMTP_HOST", "smtp.office365.com")
     smtp_port = int(os.environ.get("SMTP_PORT", 587))
     smtp_user = os.environ.get("SMTP_USER")
     smtp_pass = os.environ.get("SMTP_PASS")
     notify_to = os.environ.get("NOTIFY_TO", smtp_user)
 
+    # Markdown を HTML に変換
+    html_content = f"""
+    <html>
+    <head>
+    <style>
+      body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }}
+      h1 {{ color: #0078d4; border-bottom: 2px solid #0078d4; padding-bottom: 10px; }}
+      .footer {{ margin-top: 30px; font-size: 0.8em; color: #666; border-top: 1px solid #ccc; padding-top: 10px; }}
+    </style>
+    </head>
+    <body>
+      <h1>Pharma B2B Lead Report</h1>
+      {convert_markdown_to_html(body_markdown)}
+      <div class="footer">
+        本メールはB2B Lead Generation Botが自動送信しています。<br>
+        (github.com/Git-Nanayama/ems-notify)
+      </div>
+    </body>
+    </html>
+    """
+
     if not all([smtp_user, smtp_pass]):
         print("⚠️ SMTP 設定不足。コンソールに出力します。")
         print("=" * 60)
-        print(body)
+        print(body_markdown)
         print("=" * 60)
         return
 
-    # HTML形式での送信を検討したが、まずはプレーンテキスト/Markdown対応で構成
-    # 各種メーラーでの表示を考慮しプレーンテキスト
-    msg = MIMEText(body, "plain", "utf-8")
+    msg = MIMEText(html_content, "html", "utf-8")
     msg["Subject"] = Header(subject, "utf-8")
     msg["From"] = smtp_user
     msg["To"] = notify_to
@@ -124,7 +191,20 @@ def send_email(subject, body):
         print(f"✅ メール送信完了 → {notify_to}")
     except Exception as e:
         print(f"❌ メール送信失敗: {e}")
-        print(body)
+        # 失敗時はプレーンテキストで再送試行
+        try:
+            msg_plain = MIMEText(body_markdown, "plain", "utf-8")
+            msg_plain["Subject"] = Header(subject, "utf-8")
+            msg_plain["From"] = smtp_user
+            msg_plain["To"] = notify_to
+            with smtplib.SMTP(smtp_host, smtp_port) as server:
+                server.ehlo()
+                server.starttls()
+                server.login(smtp_user, smtp_pass)
+                server.send_message(msg_plain)
+            print("✅ プレーンテキストで再送完了。")
+        except:
+            print("❌ 再送も失敗しました。")
 
 
 # ============================================================
@@ -142,23 +222,13 @@ def main():
         print(f"❌ 発掘失敗: {e}")
         report_content = f"B2Bリードの発掘に失敗しました。\nエラー: {e}"
 
-    body = f"""🎯 B2B Pharma Lead Generation Report
-{today}
-{"=" * 60}
-
-{report_content}
-
-{"=" * 60}
-本メールはB2B Lead Generation Botが自動送信しています。
-(github.com/Git-Nanayama/ems-notify)
-"""
-
     subject = f"【🎯B2Bリード】医薬バイヤー・クリニック発掘レポート - {today}"
 
     print(f"\n📧 レポートを送信中...")
-    send_email(subject, body)
+    send_email(subject, report_content)
     print(f"\n✅ 完了。")
 
 
 if __name__ == "__main__":
     main()
+
