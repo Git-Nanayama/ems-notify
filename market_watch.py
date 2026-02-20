@@ -45,9 +45,9 @@ from xai_sdk.tools import x_search, web_search
 # ============================================================
 def find_leads():
     """
-    X(Twitter)上でGLP-1・AGA製品の購入意欲のある
-    具体的なアカウントを特定してリスト化する
-    英語・アラビア語・その他言語を対象
+    X(Twitter)上でGLP-1・AGA・片頭痛・痛風・高血圧・睡眠薬の
+    購入意欲のある具体的なアカウントを特定してリスト化する。
+    英語・アラビア語両方を対象。Wholesaler・Broker優先。
     """
     api_key = os.environ.get("GROK_API_KEY")
     if not api_key:
@@ -57,56 +57,83 @@ def find_leads():
 
     prompt = f"""Today is {today}.
 
-Your task is LEAD MINING — finding BUYERS and BROKERS on X (Twitter).
+Your ONLY task is LEAD MINING — find specific X (Twitter) users who want to BUY or SOURCE medicines in bulk.
 
-Search X right now for people who are ACTIVELY trying to BUY, SOURCE, or IMPORT:
-- **GLP-1 drugs**: Ozempic, Wegovy, Mounjaro, Zepbound, semaglutide, tirzepatide
-- **AGA treatments**: finasteride, dutasteride, minoxidil, hair loss medicine
+=== TARGET PRODUCTS (search ALL of these) ===
 
-Search in MULTIPLE LANGUAGES including:
+1. GLP-1 / Weight Loss
+   English: Ozempic, Wegovy, Mounjaro, Zepbound, semaglutide, tirzepatide, GLP-1 supplier
+   Arabic: أوزيمبيك، ويجوفي، مونجارو، سيماغلوتايد، أدوية التخسيس
 
-English keywords:
-- "looking for Ozempic supplier" / "need Wegovy wholesale"
-- "Mounjaro supply chain" / "GLP-1 broker wanted"
-- "where to buy Ozempic bulk" / "AGA medicine supplier"
-- "finasteride wholesale" / "need semaglutide source"
+2. AGA / Hair Loss
+   English: finasteride, dutasteride, minoxidil, AGA supplier, hair loss medicine wholesale
+   Arabic: فيناستيريد، دوتاستيريد، مينوكسيديل، دواء تساقط الشعر
 
-Arabic keywords (IMPORTANT - search these too):
-- أوزيمبيك (Ozempic) + مورد / جلبت / أين أشتري
-- ويجوفي (Wegovy) + تجار / توريد / موزع
-- مونجارو (Mounjaro) + مورد / بالجملة
-- سيماغلوتايد (semaglutide) + مورد / شراء
-- دواء تساقط الشعر (hair loss medicine) + مورد / أين
-- فيناستيريد (finasteride) + جملة / مورد
+3. Migraine
+   English: sumatriptan, rizatriptan, triptan supplier, migraine medicine wholesale
+   Arabic: سوماتريبتان، ريزاتريبتان، دواء الصداع النصفي، موردين الصداع النصفي
 
-Look for signals like:
-- Asking for a supplier/source/wholesaler
-- Asking where to buy in bulk
-- Mentioning they want to distribute or resell
-- Asking for a contact who can supply
+4. Gout
+   English: colchicine, allopurinol, febuxostat, gout medicine supplier, uric acid drug
+   Arabic: كولشيسين، ألوبيورينول، فيبوكسوستات، دواء النقرس، موردي النقرس
 
-For EACH lead found, return EXACTLY this format:
+5. Hypertension / Blood Pressure
+   English: amlodipine, losartan, olmesartan, blood pressure medicine supplier, antihypertensive wholesale
+   Arabic: أملوديبين، لوسارتان، ضغط الدم، دواء الضغط، موردي أدوية الضغط
+
+6. Sleep Medicine
+   English: trazodone, zolpidem, triazolam, sleeping pill supplier, sleep medicine wholesale
+   Arabic: ترازودون، زولبيديم، تريازولام، حبوب نوم، موردي أدوية النوم، دواء أرق
+
+=== HOW TO IDENTIFY A LEAD ===
+
+INCLUDE (these ARE leads — be generous):
+✅ Asking for a supplier / wholesaler / distributor contact
+✅ Asking where to buy in bulk / at wholesale price
+✅ Expressing difficulty finding a product ("can't find", "out of stock", "not available")
+✅ Asking for a reliable/trusted source or recommendation
+✅ Mentioning they want to import, stock, or resell
+✅ Clinics/pharmacies asking about procurement, pricing, or availability
+✅ Anyone comparing prices across suppliers (they are sourcing)
+✅ Arabic posts asking "أين أجد" (where to find) for any target drug
+
+EXCLUDE (these are NOT leads):
+❌ Personal stories about taking the medication
+❌ Side effects discussion
+❌ News or research articles
+❌ Sellers promoting their own products
+❌ Doctors giving prescribing advice
+
+=== PRIORITY RANKING ===
+
+★★★ HIGHEST = Wholesaler / Distributor / Importer asking for bulk supply
+★★  MEDIUM  = Clinic / Pharmacy needing regular stock
+★   LOW     = Individual end-buyer asking where to get prescription
+
+=== OUTPUT FORMAT (use EXACTLY this for each lead) ===
 
 ---
 LEAD #[number]
 Handle: @[username]
 Language: [English / Arabic / Other]
 Post date: [date]
+Product: [which drug/category]
 Post content: "[exact quote]"
-Classification: [Broker / Wholesaler / End Buyer / Distributor / Clinic]
+Classification: [Wholesaler / Distributor / Clinic / Pharmacy / End Buyer]
 Region: [country or city if visible]
-Priority: [★★★ High / ★★ Medium / ★ Low]
-Reason: [why this person is a sales target in 1 sentence]
+Priority: [★★★ / ★★ / ★]
+Reason: [why this is a lead — 1 sentence]
 ---
 
-If truly no leads found, return:
+If no leads found:
 NO LEADS TODAY
-Searched: [list what you searched]
-Reason: [why no leads found]
+Searched: [all queries you ran]
 
-IMPORTANT: Do NOT return sellers, ads, news articles, or side-effect posts. ONLY people actively seeking to purchase or source."""
+IMPORTANT: Search broadly — aim to return 5+ leads. Do NOT limit yourself to only English posts. Arabic-language leads are equally valuable."""
 
-    print(f"  [SDK] GLP-1/AGA リード検索中（英語＋アラビア語対応）...")
+    print(f"  [SDK] リード検索中（GLP-1/AGA/片頭痛/痛風/高血圧/睡眠薬 + 英語&アラビア語）...")
+
+
 
     client = Client(api_key=api_key)
     chat = client.chat.create(
