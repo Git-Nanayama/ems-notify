@@ -1,0 +1,37 @@
+name: Dubai Market Intelligence Bot
+
+on:
+  schedule:
+    # 毎日 00:00 UTC = 日本時間 午前9時 に実行
+    - cron: '0 0 * * *'
+  # GitHub の画面から手動実行もできる
+  workflow_dispatch:
+
+jobs:
+  market-watch:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Python 3.10 をセットアップ
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: 依存ライブラリをインストール
+        run: |
+          python -m pip install --upgrade pip
+          pip install openai
+
+      - name: 市場監視スクリプトを実行
+        run: python market_watch.py
+        # 環境変数は GitHub Secrets から自動注入
+        env:
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          NOTIFY_TO: logistics@kyomirai.com
