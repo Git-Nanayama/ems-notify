@@ -45,8 +45,9 @@ from xai_sdk.tools import x_search, web_search
 # ============================================================
 def find_leads():
     """
-    X(Twitter)上で日本医薬品の購入・調達意欲のある
+    X(Twitter)上でGLP-1・AGA製品の購入意欲のある
     具体的なアカウントを特定してリスト化する
+    英語・アラビア語・その他言語を対象
     """
     api_key = os.environ.get("GROK_API_KEY")
     if not api_key:
@@ -56,37 +57,56 @@ def find_leads():
 
     prompt = f"""Today is {today}.
 
-Your task is LEAD MINING, not market analysis.
+Your task is LEAD MINING — finding BUYERS and BROKERS on X (Twitter).
 
-Search X (Twitter) RIGHT NOW for people who are actively seeking to BUY or SOURCE Japanese pharmaceutical products. 
+Search X right now for people who are ACTIVELY trying to BUY, SOURCE, or IMPORT:
+- **GLP-1 drugs**: Ozempic, Wegovy, Mounjaro, Zepbound, semaglutide, tirzepatide
+- **AGA treatments**: finasteride, dutasteride, minoxidil, hair loss medicine
 
-Search for posts like:
-- "looking for Japanese medicine supplier"
-- "need Ozempic/Wegovy/Mounjaro from Japan"
-- "Japanese AGA treatment supplier wanted"
-- "日本の薬 どこで買える" (Arabic/other language variations too)
-- "want to import Japanese OTC medicine"
-- Any broker/buyer actively seeking Japanese pharma supply
+Search in MULTIPLE LANGUAGES including:
 
-For EACH account/post you find, return EXACTLY this format:
+English keywords:
+- "looking for Ozempic supplier" / "need Wegovy wholesale"
+- "Mounjaro supply chain" / "GLP-1 broker wanted"
+- "where to buy Ozempic bulk" / "AGA medicine supplier"
+- "finasteride wholesale" / "need semaglutide source"
+
+Arabic keywords (IMPORTANT - search these too):
+- أوزيمبيك (Ozempic) + مورد / جلبت / أين أشتري
+- ويجوفي (Wegovy) + تجار / توريد / موزع
+- مونجارو (Mounjaro) + مورد / بالجملة
+- سيماغلوتايد (semaglutide) + مورد / شراء
+- دواء تساقط الشعر (hair loss medicine) + مورد / أين
+- فيناستيريد (finasteride) + جملة / مورد
+
+Look for signals like:
+- Asking for a supplier/source/wholesaler
+- Asking where to buy in bulk
+- Mentioning they want to distribute or resell
+- Asking for a contact who can supply
+
+For EACH lead found, return EXACTLY this format:
 
 ---
 LEAD #[number]
-Handle: @[username] (if visible, otherwise "Anonymous")
+Handle: @[username]
+Language: [English / Arabic / Other]
 Post date: [date]
-Post content: "[exact quote or close paraphrase]"
-Classification: [Broker/Wholesaler/End Buyer/Distributor]
-Region: [country or region if visible]
+Post content: "[exact quote]"
+Classification: [Broker / Wholesaler / End Buyer / Distributor / Clinic]
+Region: [country or city if visible]
 Priority: [★★★ High / ★★ Medium / ★ Low]
-Reason: [1 sentence why this is a lead]
+Reason: [why this person is a sales target in 1 sentence]
 ---
 
-If you find NO leads, still return a "NO LEADS TODAY" section explaining what you searched for.
+If truly no leads found, return:
+NO LEADS TODAY
+Searched: [list what you searched]
+Reason: [why no leads found]
 
-DO NOT write summaries or market analysis. ONLY return the lead list in the format above.
-Aim to find at least 3-10 actionable leads."""
+IMPORTANT: Do NOT return sellers, ads, news articles, or side-effect posts. ONLY people actively seeking to purchase or source."""
 
-    print(f"  [SDK] X上のリード候補を検索中...")
+    print(f"  [SDK] GLP-1/AGA リード検索中（英語＋アラビア語対応）...")
 
     client = Client(api_key=api_key)
     chat = client.chat.create(
@@ -105,6 +125,7 @@ Aim to find at least 3-10 actionable leads."""
 
     print(f"  [SDK] レスポンス文字数: {len(full_response)} chars")
     return full_response
+
 
 
 # ============================================================
