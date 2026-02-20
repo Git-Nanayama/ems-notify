@@ -63,35 +63,43 @@ def get_grok_client():
 # ============================================================
 def fetch_market_intel(client, keyword):
     """
-    Grok API に指定キーワードを渡し、
-    X上の最新投稿を要約・分類して返す
+    Grok API のライブX検索機能を使い、
+    X上の最新投稿をリアルタイムで取得・分析して返す
     """
     today = datetime.date.today().strftime("%Y-%m-%d")
     prompt = f"""
 You are a pharmaceutical market intelligence analyst focused on the UAE and Saudi Arabia markets.
 
-Today is {today}.
+Today is {today}. You have access to real-time posts on X (Twitter).
 
-Search X (Twitter) for recent posts containing: "{keyword}"
-
-Analyze the posts and return a JSON object with the following fields:
-- "has_signal": true/false (is there any business-relevant information?)
+Based on the actual recent X posts you can search about "{keyword}", analyze and return a JSON object:
+- "has_signal": true/false (is there any business-relevant information in the posts?)
 - "type": one of ["shortage", "risk", "broker_lead", "opportunity", "none"]
-  - shortage: product out of stock, hard to find
-  - risk: fake products, scam alerts, safety issues
+  - shortage: product out of stock or hard to find
+  - risk: fake products, scam alerts, or safety issues
   - broker_lead: someone looking to buy/sell wholesale
-  - opportunity: high demand, price spike, market gap
-  - none: no relevant signal
-- "summary": 1-2 sentence English summary of the key findings
-- "raw_examples": list of up to 2 example post excerpts (anonymized)
+  - opportunity: high demand, price spike, or market gap
+  - none: no relevant signal found in recent posts
+- "summary": 1-2 sentence English summary of key findings from actual posts
+- "raw_examples": list of up to 2 real anonymized post excerpts
 
 Return ONLY the JSON object, no extra text.
 """
     try:
+        # ライブX検索を有効化（search_parameters でリアルタイムXデータを取得）
         response = client.chat.completions.create(
             model="grok-2-latest",
             messages=[{"role": "user", "content": prompt}],
-            temperature=0.3,  # 分析タスクなので低めに設定
+            temperature=0.3,
+            extra_body={
+                "search_parameters": {
+                    "mode": "on",          # ライブ検索を常時ON
+                    "sources": [
+                        {"type": "x"},     # X (Twitter) を検索対象に指定
+                    ],
+                    "max_search_results": 20,  # 取得する投稿の最大数
+                }
+            }
         )
         import json
         result_text = response.choices[0].message.content.strip()
