@@ -3,21 +3,21 @@
 Dubai Market Intelligence Bot
 中東市場（UAE・サウジアラビア）向け市場監視スクリプト
 
-概要:
-  - Grok API (xAI) を使ってX上の市場情報をリアルタイム分析
-  - 在庫不足・偽物アラート・ブローカー検知を自動分類
-  - 毎日レポートをOutlook (Microsoft 365) へメール送信
+【方式】2ステップ方式:
+  Step 1: Grokのライブ検索でX上の投稿を自然言語で取得
+  Step 2: 取得した内容をAIで分類 → JSON化
 
 環境変数 (GitHub Secrets に登録):
   GROK_API_KEY : xAI コンソールで取得した API キー
   SMTP_HOST    : smtp.office365.com
   SMTP_PORT    : 587
-  SMTP_USER    : logistics@kyomirai.com
+  SMTP_USER    : 送信元メールアドレス
   SMTP_PASS    : メールのパスワード
   NOTIFY_TO    : 通知先メールアドレス（省略時はSMTP_USERと同じ）
 """
 
 import os
+import json
 import smtplib
 import datetime
 from email.mime.text import MIMEText
@@ -25,12 +25,11 @@ from email.header import Header
 from openai import OpenAI
 
 # .env ファイルを自動読み込み（ローカル実行用）
-# GitHub Actions では Secrets から環境変数が注入されるため、このコードは無害
 try:
     from dotenv import load_dotenv
-    load_dotenv()  # 同じフォルダの .env を読み込む
+    load_dotenv()
 except ImportError:
-    pass  # python-dotenv が未インストールでも動くようにフォールバック
+    pass
 
 # ============================================================
 # 設定：監視キーワードリスト
@@ -53,128 +52,148 @@ def get_grok_client():
     """Grok API (xAI) クライアントを返す"""
     api_key = os.environ.get("GROK_API_KEY")
     if not api_key:
-        raise ValueError("GROK_API_KEY が設定されていません。GitHub Secrets を確認してください。")
-    # Grok API は OpenAI互換のエンドポイントを使用
+        raise ValueError("GROK_API_KEY が設定されていません。")
     return OpenAI(api_key=api_key, base_url="https://api.x.ai/v1")
 
 
 # ============================================================
-# 市場情報の取得・分析
+# 市場情報の取得・分析（2ステップ方式）
 # ============================================================
 def fetch_market_intel(client, keyword):
     """
-    Grok API のライブX検索機能を使い、
-    X上の最新投稿をリアルタイムで取得・分析して返す
+    2ステップ方式:
+      Step 1: ライブX検索で自然言語の生データを取得
+      Step 2: そのデータを別のAI呼び出しでJSON分類
     """
-    today = datetime.date.today().strftime("%Y-%m-%d")
-    prompt = f"""
-You are a pharmaceutical market intelligence analyst focused on the UAE and Saudi Arabia markets.
 
-Today is {today}. You have access to real-time posts on X (Twitter).
+    # --------- Step 1: X をリアルタイムで検索 ---------
+    search_prompt = (
+        f'Search X (Twitter) for recent posts (past 7 days) about "{keyword}". '
+        "Summarize what people are posting. Include 2-3 actual quote examples if available."
+    )
 
-Based on the actual recent X posts you can search about "{keyword}", analyze and return a JSON object:
-- "has_signal": true/false (is there any business-relevant information in the posts?)
-- "type": one of ["shortage", "risk", "broker_lead", "opportunity", "none"]
-  - shortage: product out of stock or hard to find
-  - risk: fake products, scam alerts, or safety issues
-  - broker_lead: someone looking to buy/sell wholesale
-  - opportunity: high demand, price spike, or market gap
-  - none: no relevant signal found in recent posts
-- "summary": 1-2 sentence English summary of key findings from actual posts
-- "raw_examples": list of up to 2 real anonymized post excerpts
-
-Return ONLY the JSON object, no extra text.
-"""
     try:
-        # ライブX検索を有効化（search_parameters でリアルタイムXデータを取得）
-        response = client.chat.completions.create(
+        search_response = client.chat.completions.create(
             model="grok-2-latest",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.3,
+            messages=[{"role": "user", "content": search_prompt}],
             extra_body={
                 "search_parameters": {
-                    "mode": "on",          # ライブ検索を常時ON
-                    "sources": [
-                        {"type": "x"},     # X (Twitter) を検索対象に指定
-                    ],
-                    "max_search_results": 20,  # 取得する投稿の最大数
+                    "mode": "on",
+                    "sources": [{"type": "x"}],
+                    "return_citations": True,
                 }
-            }
+            },
         )
-        import json
-        result_text = response.choices[0].message.content.strip()
-        # JSONのコードブロックが含まれる場合に除去
-        if result_text.startswith("```"):
-            result_text = result_text.split("```")[1]
-            if result_text.startswith("json"):
-                result_text = result_text[4:]
-        return json.loads(result_text)
+        raw_text = search_response.choices[0].message.content or ""
+        print(f"    [Step1] 取得文字数: {len(raw_text)} chars")
+        if len(raw_text) < 30:
+            print(f"    [Step1] 内容: {raw_text}")
     except Exception as e:
-        print(f"  ⚠️ APIエラー ({keyword}): {e}")
-        return {"has_signal": False, "type": "none", "summary": f"取得失敗: {e}", "raw_examples": []}
+        print(f"    [Step1] 検索失敗: {e}")
+        raw_text = ""
+
+    # 検索結果がほぼ空の場合はスキップ
+    if not raw_text or len(raw_text) < 30:
+        return {
+            "has_signal": False,
+            "type": "none",
+            "summary": "X上での関連投稿が見つかりませんでした。",
+            "raw_examples": [],
+        }
+
+    # --------- Step 2: 取得した生テキストをJSON分類 ---------
+    classify_prompt = f"""You are a pharmaceutical market intelligence analyst.
+
+Based on the following X (Twitter) posts about "{keyword}":
+---
+{raw_text[:2000]}
+---
+
+Classify as a JSON object with these fields:
+- "has_signal": true if there is any business-relevant content, false otherwise
+- "type": one of ["shortage", "risk", "broker_lead", "opportunity", "none"]
+  - shortage: out of stock, hard to find
+  - risk: fake products, scams, safety alerts
+  - broker_lead: someone seeking wholesale supply or partnership
+  - opportunity: high demand, price spike, market gap
+  - none: no relevant business signal
+- "summary": 1-2 sentence English summary
+- "raw_examples": list of up to 2 short, anonymized example quotes
+
+Return ONLY valid JSON. No explanation text."""
+
+    try:
+        classify_response = client.chat.completions.create(
+            model="grok-2-latest",
+            messages=[{"role": "user", "content": classify_prompt}],
+            temperature=0.1,
+        )
+        result_text = classify_response.choices[0].message.content.strip()
+
+        # コードブロック記法を除去
+        if "```" in result_text:
+            parts = result_text.split("```")
+            for part in parts:
+                part = part.strip()
+                if part.startswith("json"):
+                    part = part[4:].strip()
+                if part.startswith("{"):
+                    result_text = part
+                    break
+
+        result = json.loads(result_text)
+        print(f"    [Step2] タイプ: {result.get('type')} / シグナル: {result.get('has_signal')}")
+        return result
+
+    except Exception as e:
+        print(f"    [Step2] 分類失敗: {e}")
+        # 分類は失敗したが、生テキストは取得できている → ざっくり返す
+        return {
+            "has_signal": True,
+            "type": "opportunity",
+            "summary": f"X投稿を取得しましたが、自動分類に失敗しました。手動確認が必要です。RAW: {raw_text[:300]}",
+            "raw_examples": [],
+        }
 
 
 # ============================================================
 # レポート生成
 # ============================================================
 def build_report(results):
-    """
-    キーワード別の分析結果を、カテゴリごとに整理したレポートに変換する
-    """
+    """カテゴリごとに整理したレポートを生成する"""
     today = datetime.date.today().strftime("%Y/%m/%d")
     report = f"🔔 Dubai Market Intelligence Report - {today}\n"
     report += "=" * 55 + "\n\n"
 
-    # カテゴリ別に仕分け
     shortages = [(kw, r) for kw, r in results if r.get("type") == "shortage"]
     risks     = [(kw, r) for kw, r in results if r.get("type") == "risk"]
     leads     = [(kw, r) for kw, r in results if r.get("type") == "broker_lead"]
     opps      = [(kw, r) for kw, r in results if r.get("type") == "opportunity"]
     no_signal = [(kw, r) for kw, r in results if not r.get("has_signal")]
 
+    def add_section(title, items):
+        section = f"{title}\n"
+        for kw, r in items:
+            section += f"  ▶ {kw}\n"
+            section += f"    {r.get('summary', '')}\n"
+            for ex in r.get("raw_examples", []):
+                section += f"    - \"{ex}\"\n"
+        return section + "\n"
+
     if shortages:
-        report += "📉 【在庫不足アラート (Shortage)】\n"
-        for kw, r in shortages:
-            report += f"  ▶ Keyword: {kw}\n"
-            report += f"    {r['summary']}\n"
-            for ex in r.get("raw_examples", []):
-                report += f"    - \"{ex}\"\n"
-        report += "\n"
-
+        report += add_section("📉 【在庫不足アラート (Shortage)】", shortages)
     if risks:
-        report += "🚨 【リスク・偽物アラート (Risk)】\n"
-        for kw, r in risks:
-            report += f"  ▶ Keyword: {kw}\n"
-            report += f"    {r['summary']}\n"
-            for ex in r.get("raw_examples", []):
-                report += f"    - \"{ex}\"\n"
-        report += "\n"
-
+        report += add_section("🚨 【リスク・偽物アラート (Risk)】", risks)
     if leads:
-        report += "🤝 【ブローカー検知 (Broker Lead)】\n"
-        for kw, r in leads:
-            report += f"  ▶ Keyword: {kw}\n"
-            report += f"    {r['summary']}\n"
-            for ex in r.get("raw_examples", []):
-                report += f"    - \"{ex}\"\n"
-        report += "\n"
-
+        report += add_section("🤝 【ブローカー検知 (Broker Lead)】", leads)
     if opps:
-        report += "💰 【市場機会 (Opportunity)】\n"
-        for kw, r in opps:
-            report += f"  ▶ Keyword: {kw}\n"
-            report += f"    {r['summary']}\n"
-            for ex in r.get("raw_examples", []):
-                report += f"    - \"{ex}\"\n"
-        report += "\n"
-
+        report += add_section("💰 【市場機会 (Opportunity)】", opps)
     if no_signal:
         kw_list = ", ".join([kw for kw, _ in no_signal])
         report += f"ℹ️ 【本日シグナルなし】\n  {kw_list}\n\n"
 
     report += "=" * 55 + "\n"
     report += "本メールはMarket Intelligence Botが自動送信しています。\n"
-    report += "詳細: github.com/Git-Nanayama/ems-notify\n"
     return report
 
 
@@ -182,18 +201,16 @@ def build_report(results):
 # メール送信
 # ============================================================
 def send_email(subject, body):
-    """
-    Microsoft 365 (Outlook) SMTP でレポートメールを送信する
-    """
+    """Microsoft 365 (Outlook) SMTP でメールを送信する"""
     smtp_host = os.environ.get("SMTP_HOST", "smtp.office365.com")
     smtp_port = int(os.environ.get("SMTP_PORT", 587))
     smtp_user = os.environ.get("SMTP_USER")
     smtp_pass = os.environ.get("SMTP_PASS")
-    notify_to = os.environ.get("NOTIFY_TO", smtp_user)  # 省略時は送信元へ
+    notify_to = os.environ.get("NOTIFY_TO", smtp_user)
 
     if not all([smtp_user, smtp_pass]):
-        print("⚠️ SMTP 設定が不足しています。メール送信をスキップします。")
-        print(f"--- レポート内容 ---\n{body}")
+        print("⚠️ SMTP 設定不足。ログのみ出力します。")
+        print(body)
         return
 
     msg = MIMEText(body, "plain", "utf-8")
@@ -210,7 +227,7 @@ def send_email(subject, body):
         print(f"✅ メール送信完了 → {notify_to}")
     except Exception as e:
         print(f"❌ メール送信失敗: {e}")
-        print(f"--- レポート内容（未送信）---\n{body}")
+        print(body)
 
 
 # ============================================================
@@ -220,36 +237,28 @@ def main():
     print("🚀 Dubai Market Intelligence Bot 起動中...")
     today = datetime.date.today().strftime("%Y/%m/%d")
 
-    # Grok API クライアント初期化
     try:
         client = get_grok_client()
     except ValueError as e:
         print(f"❌ 初期化エラー: {e}")
         return
 
-    # 全キーワードを順番に調査
     results = []
     for keyword in WATCH_KEYWORDS:
-        print(f"  🔍 調査中: {keyword}")
+        print(f"\n  🔍 調査中: {keyword}")
         intel = fetch_market_intel(client, keyword)
         results.append((keyword, intel))
-        signal_icon = "📌" if intel.get("has_signal") else "  "
-        print(f"  {signal_icon} タイプ: {intel.get('type', 'none')}")
 
-    # レポート生成
     print("\n📊 レポート生成中...")
     report_body = build_report(results)
 
-    # 重要シグナルがあればメール送信
     has_any_signal = any(r.get("has_signal") for _, r in results)
-    if has_any_signal:
-        subject = f"【市場アラート】Dubai Market Report - {today}"
-        send_email(subject, report_body)
-    else:
-        # シグナルなしでも日次サマリーを送信（静かな日も把握）
-        subject = f"【異常なし】Dubai Market Report - {today}"
-        send_email(subject, report_body)
-
+    subject = (
+        f"【市場アラート】Dubai Market Report - {today}"
+        if has_any_signal
+        else f"【異常なし】Dubai Market Report - {today}"
+    )
+    send_email(subject, report_body)
     print("✅ 完了。")
 
 
