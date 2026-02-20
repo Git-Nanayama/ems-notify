@@ -33,52 +33,66 @@ from xai_sdk.tools import x_search, web_search
 
 def find_b2b_leads():
     """
-    X (Twitter) 特化のインテントベース検索で 15-20 件の B2B リードを発掘する
+    曜日別のターゲット・ローテーションで、AIの精度を最大化しつつB2Bリードを発掘する
     """
     api_key = os.environ.get("GROK_API_KEY")
     if not api_key:
         raise ValueError("GROK_API_KEY が設定されていません。")
 
-    today = datetime.date.today().strftime("%Y-%m-%d")
+    today = datetime.date.today()
+    date_str = today.strftime("%Y-%m-%d")
+    weekday = today.weekday()  # 0:Mon, 1:Tue, ..., 6:Sun
 
-    prompt = f"""Today is {today}.
+    # 曜日別ターゲットグループの定義
+    if weekday in [0, 3, 6]:  # 月・木・日
+        group_name = "Group A: GCC & Egypt"
+        regions = "UAE, Saudi Arabia, Kuwait, Qatar, Egypt"
+        focus_points = """- Middle East (GCC): High purchasing power. Focus on luxury clinics and supply chain stability.
+- Egypt: Healthcare hub for the region. Look for importers/medical tourism facilitators."""
+        languages = "Arabic, English"
+    elif weekday in [1, 4]:  # 火・金
+        group_name = "Group B: Europe, Turkey, Africa"
+        regions = "United Kingdom, Turkey, Nigeria, South Africa"
+        focus_points = """- Turkey: Global hub for AGA (hair loss). Search for clinics and lab-owners (Turkish: 'ilaç tedarikçisi').
+- UK: Major GLP-1 shortages. Private clinics seeking stable Japanese supply.
+- Africa (Nigeria, South Africa): Strong demand for 'authentic Japanese quality' to avoid counterfeit risks."""
+        languages = "English, Turkish"
+    else:  # 水・土
+        group_name = "Group C: Asia & SE Asia"
+        regions = "Thailand, Taiwan, Hong Kong"
+        focus_points = """- Thailand: Active X community. Search for aesthetic clinic owners and distributors (Thai: 'ตัวแทนจำหน่ายยา').
+- East Asia (Taiwan/HK): Professional healthcare networks interested in J-GMP quality pharmaceuticals."""
+        languages = "English, Thai, Traditional Chinese"
 
-You are an expert B2B Lead Generation Specialist in the pharma industry.
+    prompt = f"""Today is {date_str}. Your current focus group is {group_name}.
 
-YOUR TASK: Identify 15-20 high-value B2B targets on X (Twitter) who are potential buyers/distributors for high-quality Japanese pharmaceuticals (Obesity/GLP-1, AGA, etc.).
+You are an expert B2B Lead Generation Specialist. 
+YOUR TASK: Identify 15-20 high-value B2B targets on X (Twitter) in the following regions: {regions}.
 
-=== SEARCH STRATEGY: GLOBAL B2B FOCUS (X/Twitter) ===
-Focus on these high-potential regions and their specific signals:
-1. **GCC (UAE, Saudi, Kuwait, Qatar)**: High purchasing power. Luxury healthcare and supply chain stability.
-2. **Africa (Egypt, Nigeria, South Africa)**: MASSIVE growth. Search for importers/clinics worried about "counterfeit GLP-1/drugs" and seeking "authentic Japanese GMP quality". (Query: "genuine medicine", "safe supply", "Japan pharma importer").
-3. **Turkey**: Global hub for AGA. Search for clinics/distributors seeking premium AGA drugs.
-4. **United Kingdom**: GLP-1 shortages. Private clinics seeking stable supply.
-5. **East Asia & SE Asia (Taiwan, HK, Thailand)**: Aesthetic clinics and professional distributors.
+=== REGIONAL STRATEGY ===
+{focus_points}
 
 === TARGETING B2B INTENT (NOT B2C) ===
-❌ NO standalone drug names alone.
+❌ NO standalone drug names (prevents patient spam).
 ⭕️ SEARCH FOR:
-- Signals of "Drug shortage", "Anti-counterfeit measures", "Clinic procurement", "Wholesale registration".
-- Keywords: Clinic owner, Medical director, Pharmaceutical importer, Health entrepreneur.
-- Languages: Arabic, Turkish, Thai, English.
+- "Clinic owner", "Medical director", "Pharmacy chain", "Medical distributor", "Pharma importer" + "Japan" or "Supply".
+- Specific pains: "medication shortage", "counterfeit/fake drug risks", "new clinic treatments", "reliable wholesale source".
 
 === OUTPUT FORMAT ===
 Generate a MARKDOWN TABLE (Japanese columns):
-| アカウント名 (@ID) | 推定される役職・属性 | 国・地域 | リストアップした理由（Painや地域特性、Intentの兆候等） |
+| アカウント名 (@ID) | 推定される役職・属性 | 国・地域 | リストアップした理由（Painや地域特性、直近のIntentの兆候等） |
 
-Include 15-20 high-quality B2B leads. Handles are critical.
+Include 15-20 actionable leads. Handles are critical. 
+Only the table and a one-sentence intro in Japanese."""
 
-Include 15-20 actionable leads. Ensure handles are included where possible.
-Only the table and a one-sentence intro."""
-
-    print(f"  [SDK] X特化のB2Bリード検索中（目標15-20件）...")
+    print(f"  [SDK] {group_name} のB2Bリード検索中（目標15-20件）...")
 
     client = Client(api_key=api_key)
     chat = client.chat.create(
         model="grok-4-1-fast-reasoning",
         tools=[
             x_search(),
-            web_search(), # Keep as backup
+            web_search(),
         ],
     )
     chat.append(user_msg(prompt))
