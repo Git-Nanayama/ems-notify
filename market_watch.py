@@ -33,7 +33,7 @@ from xai_sdk.tools import x_search, web_search
 
 def find_b2b_leads():
     """
-    インテントベースの高度な検索でB2Bリードを発掘する
+    X (Twitter) 特化のインテントベース検索で 15-20 件の B2B リードを発掘する
     """
     api_key = os.environ.get("GROK_API_KEY")
     if not api_key:
@@ -41,42 +41,41 @@ def find_b2b_leads():
 
     today = datetime.date.today().strftime("%Y-%m-%d")
 
-    # システムプロンプト的な役割を持たせたメインプロンプト
     prompt = f"""Today is {today}.
 
-You are an expert B2B Lead Generation Specialist specializing in the healthcare and pharmaceutical industry. 
+You are an expert B2B Lead Generation Specialist in the pharma industry.
 
-YOUR TASK: Identify 10-15 high-value B2B targets on X (Twitter) who are potential buyers or distributors for high-quality Japanese pharmaceutical products (Obesity/GLP-1, AGA treatments, etc.).
+YOUR TASK: Identify 15-20 high-value B2B targets on X (Twitter) who are potential buyers/distributors for high-quality Japanese pharmaceuticals (Obesity/GLP-1, AGA, etc.).
 
-=== SEARCH STRATEGY (CRITICAL) ===
+=== SEARCH STRATEGY: X (TWITTER) FOCUS ===
+Use x_search extensively to find business intent. Focus on these regional signals:
+1. **Middle East (UAE/Saudi)**: High activity on X for healthcare procurement. Search in English/Arabic for supply chain "pain" (shortages, fake GLP-1 alerts, reliable source seeking).
+2. **Thailand**: Very active X community. Search in Thai/English for clinic owners looking for premium drugs.
+3. **East Asia (Taiwan/HK)**: Professional healthcare networks. Search for interest in Japanese GMP quality.
 
-❌ DO NOT search for drug names alone (e.g., "Ozempic", "Mounjaro") to avoid patients and spam.
-⭕️ FOCUS ON BUSINESS PAIN POINTS & INTENT:
-1. **Supply Chain Pain**: Users discussing "fake GLP-1", "reliable supplier needed", "supply chain issues", "medication shortage", or sourcing challenges.
-2. **Business Expansion Intent**: Clinic owners or directors discussing "expanding weight management services", "adding hair loss treatments", or "new aesthetic solutions for clinics".
-3. **Quality & Trust Intent**: Interest in "J-GMP", "Japanese medical quality", "authentic pharmaceuticals", or "Japanese medical technology".
-
-=== TARGET ROLES & REGIONS ===
-- Roles: Clinic Owner, Medical Director, Dermatologist, Pharmacist, Medical Distributor, Healthcare Entrepreneur.
-- Regions: UAE (Dubai/Abu Dhabi), Saudi Arabia, Taiwan, Hong Kong.
+=== TARGETING B2B INTENT (NOT B2C) ===
+❌ NO standalone drug names (prevents patient spam).
+⭕️ SEARCH FOR:
+- "Clinic owner", "Medical director", "Pharmacy chain", "Aesthetic clinic", "Medical distributor" + "Japan" or "Supply".
+- Discussions about "medication shortage", "counterfeit/fake drug risks", "new clinic treatments", "reliable wholesale source".
+- Arabic: "موزع أدوية", "مستورد", "صيدلية" + "اليابان".
+- Thai: "ตัวแทนจำหน่ายยา", "คลินิก", "ยาญี่ปุ่น".
 
 === OUTPUT FORMAT ===
+Generate a MARKDOWN TABLE (Japanese columns):
+| アカウント名 (@ID) | 推定される役職・属性 | 国・地域 | リストアップした理由（PainやIntentの具体的な兆候、投稿内容等） |
 
-Generate a MARKDOWN TABLE with exactly these columns:
-| アカウント名 (@ID) | 推定される役職・属性 | 国・地域 | リストアップした理由（どのようなPainや関心を抱えているか、最近の関連ツイートの傾向など） |
+Include 15-20 actionable leads. Ensure handles are included where possible.
+Only the table and a one-sentence intro."""
 
-Include 10-15 actionable targets. If the exact handle is not verified, use their Display Name and describe them accurately. Use Japanese for the columns as requested.
-
-Write ONLY the table and a brief introduction. No long analysis."""
-
-    print(f"  [SDK] インテントベースのB2Bリード検索を実行中...")
+    print(f"  [SDK] X特化のB2Bリード検索中（目標15-20件）...")
 
     client = Client(api_key=api_key)
     chat = client.chat.create(
         model="grok-4-1-fast-reasoning",
         tools=[
             x_search(),
-            web_search(),
+            web_search(), # Keep as backup
         ],
     )
     chat.append(user_msg(prompt))
