@@ -104,6 +104,9 @@ YOUR TASK: Identify 15-20 high-value B2B targets on X (Twitter) in the following
 - Professionals explicitly interested in Japanese Pharmaceuticals ("Japanese quality", "authentic medicine").
 - Buyers actively seeking new suppliers ("looking for reliable supplier", "need wholesale source", "B2B partnership").
 
+=== SEARCH LANGUAGE INSTRUCTION ===
+You MUST construct your X (Twitter) search queries using the native languages of the target regions (e.g., Arabic for GCC, Turkish for Turkey, Traditional Chinese for Taiwan/HK, etc.) to find authentic local buyers, in addition to English. Use the specified languages for this group: {languages}.
+
 === OUTPUT FORMAT ===
 Generate a MARKDOWN TABLE in SIMPLIFIED CHINESE (简体中文):
 | 账户名 (@ID) | 预估职位/属性 | 国家/地区 | 列入名单原因 (需求痛点、地域特征、购买意向等) |
