@@ -43,47 +43,70 @@ def find_b2b_leads():
     date_str = today.strftime("%Y-%m-%d")
     weekday = today.weekday()  # 0:Mon, 1:Tue, ..., 6:Sun
 
-    # 曜日別ターゲットグループの定義
-    if weekday in [0, 3, 6]:  # 月・木・日
-        group_name = "Group A: GCC & Egypt"
-        regions = "UAE, Saudi Arabia, Kuwait, Qatar, Egypt"
-        focus_points = """- Middle East (GCC): High purchasing power. Focus on luxury clinics and supply chain stability.
-- Egypt: Healthcare hub for the region. Look for importers/medical tourism facilitators."""
+    # 曜日別ターゲットグループの定義 (地域主キー × Rank A商材)
+    if weekday == 0:  # 月曜
+        group_name = "Group A: GCC (UAE & Saudi Arabia)"
+        regions = "UAE, Saudi Arabia, Kuwait, Qatar"
+        focus_points = """- Core Product (Rank A): GLP-1 (Mounjaro/Ozempic/Wegovy) and AGA treatments.
+- Intent: Search for high-net-worth clinics experiencing severe GLP-1 shortages."""
         languages = "Arabic, English"
-    elif weekday in [1, 4]:  # 火・金
-        group_name = "Group B: Europe, Turkey, Africa"
-        regions = "United Kingdom, Turkey, Nigeria, South Africa"
-        focus_points = """- Turkey: Global hub for AGA (hair loss). Search for clinics and lab-owners (Turkish: 'ilaç tedarikçisi').
-- UK: Major GLP-1 shortages. Private clinics seeking stable Japanese supply.
-- Africa (Nigeria, South Africa): Strong demand for 'authentic Japanese quality' to avoid counterfeit risks."""
+    elif weekday == 1:  # 火曜
+        group_name = "Group B: East Asia (Taiwan, Hong Kong, Singapore)"
+        regions = "Taiwan, Hong Kong, Singapore"
+        focus_points = """- Core Product (Rank A): AGA treatments and GLP-1. (Rank B: Sleep medications like Dayvigo).
+- Intent: Aesthetic clinics seeking authentic 'J-GMP' (Japanese quality) pharmaceuticals."""
+        languages = "English, Traditional Chinese, Simplified Chinese"
+    elif weekday == 2:  # 水曜
+        group_name = "Group C: UK & Europe"
+        regions = "United Kingdom, Germany, France"
+        focus_points = """- Core Product (Rank A): GLP-1 (Mounjaro/Wegovy).
+- Intent: Private clinics and pharmacies desperately looking for stable GLP-1 supply due to national shortages."""
+        languages = "English, German, French"
+    elif weekday == 3:  # 木曜
+        group_name = "Group D: Turkey"
+        regions = "Turkey"
+        focus_points = """- Core Product (Rank A): AGA treatments (Finasteride/Dutasteride).
+- Intent: Global hair transplant hub. Target hair transplant clinics, lab-owners, and medical tourism facilitators."""
         languages = "English, Turkish"
-    else:  # 水・土
-        group_name = "Group C: Asia & SE Asia"
-        regions = "Thailand, Taiwan, Hong Kong"
-        focus_points = """- Thailand: Active X community. Search for aesthetic clinic owners and distributors (Thai: 'ตัวแทนจำหน่ายยา').
-- East Asia (Taiwan/HK): Professional healthcare networks interested in J-GMP quality pharmaceuticals."""
-        languages = "English, Thai, Traditional Chinese"
+    elif weekday == 4:  # 金曜
+        group_name = "Group E: Africa & CIS"
+        regions = "Nigeria, South Africa, Central Asia"
+        focus_points = """- Core Product (Rank A): GLP-1 and AGA. (Rank B: Authentic lifestyle disease meds).
+- Intent: High-net-worth hospitals and importers avoiding fake drugs, seeking '100% Authentic Japanese' supply."""
+        languages = "English"
+    elif weekday == 5:  # 土曜
+        group_name = "Group F: Southeast Asia"
+        regions = "Thailand, Vietnam, Philippines, Indonesia"
+        focus_points = """- Core Product (Rank A): GLP-1 and AGA. (Rank B: Gout treatments like Febuxostat).
+- Intent: Target aesthetic clinics (Thailand/Vietnam) and distributors seeking gout treatments (Philippines/Indonesia)."""
+        languages = "English, Thai, Vietnamese"
+    else:  # 日曜
+        group_name = "Group G: Global Sweep"
+        regions = "Global (Worldwide)"
+        focus_points = """- Core Product (Rank A): GLP-1 and AGA.
+- Intent: Find any remaining high-value doctors, clinics, or wholesalers globally complaining about drug shortages."""
+        languages = "English"
 
     prompt = f"""Today is {date_str}. Your current focus group is {group_name}.
 
 You are an expert B2B Lead Generation Specialist. 
 YOUR TASK: Identify 15-20 high-value B2B targets on X (Twitter) in the following regions: {regions}.
 
-=== REGIONAL STRATEGY ===
+=== REGIONAL STRATEGY & CORE PRODUCTS ===
 {focus_points}
 
 === TARGETING B2B INTENT (NOT B2C) ===
 ❌ NO standalone drug names (prevents patient spam).
 ⭕️ SEARCH FOR:
 - "Clinic owner", "Medical director", "Pharmacy chain", "Medical distributor", "Pharma importer" + "Japan" or "Supply".
-- Specific pains: "medication shortage", "counterfeit/fake drug risks", "new clinic treatments", "reliable wholesale source".
+- Specific pains related to the Core Products (e.g., "medication shortage", "counterfeit/fake drug risks", "reliable wholesale source").
 
 === OUTPUT FORMAT ===
-Generate a MARKDOWN TABLE (Japanese columns):
-| アカウント名 (@ID) | 推定される役職・属性 | 国・地域 | リストアップした理由（Painや地域特性、直近のIntentの兆候等） |
+Generate a MARKDOWN TABLE in SIMPLIFIED CHINESE (简体中文):
+| 账户名 (@ID) | 预估职位/属性 | 国家/地区 | 列入名单原因 (需求痛点、地域特征、购买意向等) |
 
 Include 15-20 actionable leads. Handles are critical. 
-Only the table and a one-sentence intro in Japanese."""
+Only output the table and a one-sentence intro in Simplified Chinese (简体中文). Do NOT use Japanese or English in the output text."""
 
     print(f"  [SDK] {group_name} のB2Bリード検索中（目標15-20件）...")
 
@@ -176,10 +199,10 @@ def send_email(subject, body_markdown):
     </style>
     </head>
     <body>
-      <h1>Pharma B2B Lead Report</h1>
+      <h1>医药 B2B 潜在客户挖掘报告 (Pharma B2B Leads)</h1>
       {convert_markdown_to_html(body_markdown)}
       <div class="footer">
-        本メールはB2B Lead Generation Botが自動送信しています。<br>
+        本邮件由 B2B Lead Generation Bot 自动发送。<br>
         (github.com/Git-Nanayama/ems-notify)
       </div>
     </body>
@@ -236,9 +259,9 @@ def main():
         report_content = find_b2b_leads()
     except Exception as e:
         print(f"❌ 発掘失敗: {e}")
-        report_content = f"B2Bリードの発掘に失敗しました。\nエラー: {e}"
+        report_content = f"B2B潜在客户挖掘失败。\n错误 (Error): {e}"
 
-    subject = f"【🎯B2Bリード】医薬バイヤー・クリニック発掘レポート - {today}"
+    subject = f"【🎯B2B潜在客户】医药买家/诊所挖掘报告 - {today}"
 
     print(f"\n📧 レポートを送信中...")
     send_email(subject, report_content)
