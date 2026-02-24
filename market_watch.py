@@ -97,9 +97,12 @@ YOUR TASK: Identify 15-20 high-value B2B targets on X (Twitter) in the following
 
 === TARGETING B2B INTENT (NOT B2C) ===
 ❌ NO standalone drug names (prevents patient spam).
-⭕️ SEARCH FOR:
-- "Clinic owner", "Medical director", "Pharmacy chain", "Medical distributor", "Pharma importer" + "Japan" or "Supply".
-- Specific pains related to the Core Products (e.g., "medication shortage", "counterfeit/fake drug risks", "reliable wholesale source").
+❌ EXCLUDE large general hospital directors (they usually do not buy directly from new foreign agents), medical media/news accounts, and journalists.
+⭕️ SEARCH FOR ACTIONABLE B2B BUYERS:
+- Distributors & Wholesalers ("medical distributor", "pharma wholesaler", "importer").
+- Private Clinic Owners/Buyers complaining about shortages ("out of stock", "supply issue", "unable to source").
+- Professionals explicitly interested in Japanese Pharmaceuticals ("Japanese quality", "authentic medicine").
+- Buyers actively seeking new suppliers ("looking for reliable supplier", "need wholesale source", "B2B partnership").
 
 === OUTPUT FORMAT ===
 Generate a MARKDOWN TABLE in SIMPLIFIED CHINESE (简体中文):
