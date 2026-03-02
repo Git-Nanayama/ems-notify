@@ -91,6 +91,34 @@ def find_b2b_leads():
 - Intent: Find any remaining high-value doctors, clinics, or wholesalers globally complaining about drug shortages."""
         languages = "English"
 
+    # 現在時刻(UTC)から時間帯を判定し、検索クエリ（注目ポイント）を分散させる
+    # 設定スケジュール: UTC 21(JST 6), UTC 3(JST 12), UTC 6(JST 15)
+    # ※GitHub Actionsの遅延を考慮して幅を持たせます
+    utc_now = datetime.datetime.utcnow()
+    hour = utc_now.hour
+
+    if hour >= 20 or hour < 2:
+        # UTC 21:00前後 (JST 朝6:00頃) -> Direct Pain/Buyers
+        segment_name = "朝の部 (Direct Buyers)"
+        segment_instruction = """
+=== SEGMENT STRATEGY (MORNING: DIRECT BUYERS) ===
+Focus on finding DIRECT BUYERS (clinics, hospitals, specific doctors) expressing IMMEDIATE pain points. Look for keywords implying "shortage", "out of stock", "desperately looking for", "need a new supplier", or "cannot source". Connect these pain points to their potential need for importing authentic medication.
+"""
+    elif hour >= 2 and hour < 5:
+        # UTC 03:00前後 (JST 昼12:00頃) -> Quality Seekers
+        segment_name = "昼の部 (Quality Seekers)"
+        segment_instruction = """
+=== SEGMENT STRATEGY (AFTERNOON: QUALITY SEEKERS) ===
+Focus on finding PREMIUM QUALITY SEEKERS (boutique clinics, aesthetic centers, high-end distributors). Look for targets emphasizing "authentic medicine", "Japanese quality", "J-GMP", "premium products", or those warning their patients about "fake drugs". They value quality over price.
+"""
+    else:
+        # UTC 06:00前後 (JST 午後15:00頃) 以降 -> Distributors / Partners
+        segment_name = "午後の部 (Distributors / Partners)"
+        segment_instruction = """
+=== SEGMENT STRATEGY (EVENING: B2B PARTNERS) ===
+Focus explicitly on WHOLESALERS, IMPORTERS, and B2B DISTRIBUTORS. Look for keywords implying "B2B partnership", "pharma distributor", "seeking international manufacturers", "looking for import opportunities", or "wholesale supply chain". We want companies capable of buying in bulk.
+"""
+
     prompt = f"""Today is {date_str}. Your current focus group is {group_name}.
 
 You are an expert B2B Lead Generation Specialist. 
@@ -98,6 +126,8 @@ YOUR TASK: Identify 30-40 high-value B2B targets on X (Twitter) in the following
 
 === REGIONAL STRATEGY & CORE PRODUCTS ===
 {focus_points}
+
+{segment_instruction}
 
 === TARGETING B2B INTENT (NOT B2C) ===
 ❌ NO standalone drug names (prevents patient spam).
@@ -122,7 +152,7 @@ Generate a MARKDOWN TABLE in JAPANESE (日本語):
 Include 30-40 actionable leads. Handles are critical. 
 Only output the table and a one-sentence intro in Japanese. Do NOT use simplified Chinese in the output text."""
 
-    print(f"  [SDK] {group_name} のB2Bリード検索中（目標30-40件）...")
+    print(f"  [SDK] {group_name} / {segment_name} のB2Bリード検索中（目標30-40件）...")
 
     client = Client(api_key=api_key)
     chat = client.chat.create(
@@ -140,7 +170,7 @@ Only output the table and a one-sentence intro in Japanese. Do NOT use simplifie
             full_response += chunk.content
 
     print(f"  [SDK] レスポンス文字数: {len(full_response)} chars")
-    return full_response
+    return full_response, segment_name
 
 
 def convert_markdown_to_csv(text):
@@ -299,12 +329,13 @@ def main():
 
     try:
         print("\n🔍 インテント分析によるバイヤー候補の発掘中...")
-        report_content = find_b2b_leads()
+        report_content, segment_name = find_b2b_leads()
     except Exception as e:
         print(f"❌ 発掘失敗: {e}")
         report_content = f"B2B潜在顧客の発掘に失敗しました。\nエラー内容: {e}"
+        segment_name = "エラー"
 
-    subject = f"【🎯B2Bリード】医薬品バイヤー発掘レポート - {today}"
+    subject = f"【🎯B2Bリード】医薬品バイヤー発掘レポート ({segment_name}) - {today}"
     csv_filename = f"B2B_Leads_{datetime.date.today().strftime('%Y%m%d')}.csv"
 
     print(f"\n📧 レポートを送信中...")
