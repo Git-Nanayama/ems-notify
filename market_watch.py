@@ -92,30 +92,30 @@ def find_b2b_leads():
         languages = "English"
 
     # 現在時刻(UTC)から時間帯を判定し、検索クエリ（注目ポイント）を分散させる
-    # 設定スケジュール: UTC 21(JST 6), UTC 3(JST 12), UTC 6(JST 15)
+    # 設定スケジュール: UTC 21(JST 6), UTC 1(JST 10), UTC 4(JST 13)
     # ※GitHub Actionsの遅延を考慮して幅を持たせます
     utc_now = datetime.datetime.utcnow()
     hour = utc_now.hour
 
-    if hour >= 20 or hour < 2:
+    if hour >= 20 or hour == 0:
         # UTC 21:00前後 (JST 朝6:00頃) -> Direct Pain/Buyers
         segment_name = "朝の部 (Direct Buyers)"
         segment_instruction = """
 === SEGMENT STRATEGY (MORNING: DIRECT BUYERS) ===
 Focus on finding DIRECT BUYERS (clinics, hospitals, specific doctors) expressing IMMEDIATE pain points. Look for keywords implying "shortage", "out of stock", "desperately looking for", "need a new supplier", or "cannot source". Connect these pain points to their potential need for importing authentic medication.
 """
-    elif hour >= 2 and hour < 5:
-        # UTC 03:00前後 (JST 昼12:00頃) -> Quality Seekers
-        segment_name = "昼の部 (Quality Seekers)"
+    elif hour >= 1 and hour < 3:
+        # UTC 01:00前後 (JST 午前10:00頃) -> Quality Seekers
+        segment_name = "昼前・午前の部 (Quality Seekers)"
         segment_instruction = """
-=== SEGMENT STRATEGY (AFTERNOON: QUALITY SEEKERS) ===
+=== SEGMENT STRATEGY (LATE MORNING: QUALITY SEEKERS) ===
 Focus on finding PREMIUM QUALITY SEEKERS (boutique clinics, aesthetic centers, high-end distributors). Look for targets emphasizing "authentic medicine", "Japanese quality", "J-GMP", "premium products", or those warning their patients about "fake drugs". They value quality over price.
 """
     else:
-        # UTC 06:00前後 (JST 午後15:00頃) 以降 -> Distributors / Partners
+        # UTC 04:00前後 (JST 午後13:00頃) 以降 -> Distributors / Partners
         segment_name = "午後の部 (Distributors / Partners)"
         segment_instruction = """
-=== SEGMENT STRATEGY (EVENING: B2B PARTNERS) ===
+=== SEGMENT STRATEGY (AFTERNOON: B2B PARTNERS) ===
 Focus explicitly on WHOLESALERS, IMPORTERS, and B2B DISTRIBUTORS. Look for keywords implying "B2B partnership", "pharma distributor", "seeking international manufacturers", "looking for import opportunities", or "wholesale supply chain". We want companies capable of buying in bulk.
 """
 
@@ -146,7 +146,10 @@ You MUST construct your X (Twitter) search queries using the native languages of
 Generate a MARKDOWN TABLE in JAPANESE (日本語):
 | アカウント名 (@ID) | 推定役職・属性 | 国・地域 | リストアップ理由 (課題、地域性、購買意欲など) | おすすめDM書き出し案（原語） | DM書き出し案（日本語訳） |
 
-- **おすすめDM書き出し案（原語）**: Create a 20-30 word personalized ice-breaker message in the target's native language or English. Start by complimenting or empathizing with their recent post/situation. DO NOT be overly salesy.
+- **おすすめDM書き出し案（原語）**: Create a forceful, direct B2B sales pitch (in English or native language) structured in the following sequence:
+   1. Introduction: "We are Asakusa Pharmacy, an authorized distributor of authentic Japanese pharmaceuticals."
+   2. Hook (Personalized): "We are looking to expand internationally, and came across your post about [insert their specific post topic/pain point]."
+   3. Call to Action: "We thought there might be a potential for business collaboration. If you have any interest in importing Japanese medical supplies, we would love to arrange a quick discussion."
 - **DM書き出し案（日本語訳）**: Provide a Japanese translation of the ice-breaker message above so the Japanese staff understands the intent.
 
 Include 30-40 actionable leads. Handles are critical. 
