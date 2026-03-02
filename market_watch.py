@@ -98,6 +98,7 @@ YOUR TASK: Identify 15-20 high-value B2B targets on X (Twitter) in the following
 === TARGETING B2B INTENT (NOT B2C) ===
 ❌ NO standalone drug names (prevents patient spam).
 ❌ EXCLUDE large general hospital directors (they usually do not buy directly from new foreign agents), medical media/news accounts, and journalists.
+❌ EXCLUDE Japan (Do NOT include any targets based in Japan or Japanese individuals).
 ⭕️ SEARCH FOR ACTIONABLE B2B BUYERS:
 - Distributors & Wholesalers ("medical distributor", "pharma wholesaler", "importer").
 - Private Clinic Owners/Buyers complaining about shortages ("out of stock", "supply issue", "unable to source").
@@ -108,11 +109,14 @@ YOUR TASK: Identify 15-20 high-value B2B targets on X (Twitter) in the following
 You MUST construct your X (Twitter) search queries using the native languages of the target regions (e.g., Arabic for GCC, Turkish for Turkey, Traditional Chinese for Taiwan/HK, etc.) to find authentic local buyers, in addition to English. Use the specified languages for this group: {languages}.
 
 === OUTPUT FORMAT ===
-Generate a MARKDOWN TABLE in SIMPLIFIED CHINESE (简体中文):
-| 账户名 (@ID) | 预估职位/属性 | 国家/地区 | 列入名单原因 (需求痛点、地域特征、购买意向等) |
+Generate a MARKDOWN TABLE in JAPANESE (日本語):
+| アカウント名 (@ID) | 推定役職・属性 | 国・地域 | リストアップ理由 (課題、地域性、購買意欲など) | おすすめDM書き出し案（原語） | DM書き出し案（日本語訳） |
+
+- **おすすめDM書き出し案（原語）**: Create a 20-30 word personalized ice-breaker message in the target's native language or English. Start by complimenting or empathizing with their recent post/situation. DO NOT be overly salesy.
+- **DM書き出し案（日本語訳）**: Provide a Japanese translation of the ice-breaker message above so the Japanese staff understands the intent.
 
 Include 15-20 actionable leads. Handles are critical. 
-Only output the table and a one-sentence intro in Simplified Chinese (简体中文). Do NOT use Japanese or English in the output text."""
+Only output the table and a one-sentence intro in Japanese. Do NOT use simplified Chinese in the output text."""
 
     print(f"  [SDK] {group_name} のB2Bリード検索中（目標15-20件）...")
 
@@ -205,10 +209,10 @@ def send_email(subject, body_markdown):
     </style>
     </head>
     <body>
-      <h1>医药 B2B 潜在客户挖掘报告 (Pharma B2B Leads)</h1>
+      <h1>医薬品 B2B 潜在顧客（リード）発掘レポート</h1>
       {convert_markdown_to_html(body_markdown)}
       <div class="footer">
-        本邮件由 B2B Lead Generation Bot 自动发送。<br>
+        このメールは B2B Lead Generation Bot によって自動送信されています。<br>
         (github.com/Git-Nanayama/ems-notify)
       </div>
     </body>
@@ -265,9 +269,9 @@ def main():
         report_content = find_b2b_leads()
     except Exception as e:
         print(f"❌ 発掘失敗: {e}")
-        report_content = f"B2B潜在客户挖掘失败。\n错误 (Error): {e}"
+        report_content = f"B2B潜在顧客の発掘に失敗しました。\nエラー内容: {e}"
 
-    subject = f"【🎯B2B潜在客户】医药买家/诊所挖掘报告 - {today}"
+    subject = f"【🎯B2Bリード】医薬品バイヤー・クリニック発掘レポート - {today}"
 
     print(f"\n📧 レポートを送信中...")
     send_email(subject, report_content)
