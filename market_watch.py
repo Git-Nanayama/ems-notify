@@ -17,7 +17,11 @@ Japan Pharma B2B Lead Generation Bot
 import os
 import smtplib
 import datetime
+import csv
+import io
 from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.application import MIMEApplication
 from email.header import Header
 
 try:
@@ -90,7 +94,7 @@ def find_b2b_leads():
     prompt = f"""Today is {date_str}. Your current focus group is {group_name}.
 
 You are an expert B2B Lead Generation Specialist. 
-YOUR TASK: Identify 15-20 high-value B2B targets on X (Twitter) in the following regions: {regions}.
+YOUR TASK: Identify 30-40 high-value B2B targets on X (Twitter) in the following regions: {regions}.
 
 === REGIONAL STRATEGY & CORE PRODUCTS ===
 {focus_points}
@@ -115,10 +119,10 @@ Generate a MARKDOWN TABLE in JAPANESE (日本語):
 - **おすすめDM書き出し案（原語）**: Create a 20-30 word personalized ice-breaker message in the target's native language or English. Start by complimenting or empathizing with their recent post/situation. DO NOT be overly salesy.
 - **DM書き出し案（日本語訳）**: Provide a Japanese translation of the ice-breaker message above so the Japanese staff understands the intent.
 
-Include 15-20 actionable leads. Handles are critical. 
+Include 30-40 actionable leads. Handles are critical. 
 Only output the table and a one-sentence intro in Japanese. Do NOT use simplified Chinese in the output text."""
 
-    print(f"  [SDK] {group_name} のB2Bリード検索中（目標15-20件）...")
+    print(f"  [SDK] {group_name} のB2Bリード検索中（目標30-40件）...")
 
     client = Client(api_key=api_key)
     chat = client.chat.create(
@@ -139,78 +143,91 @@ Only output the table and a one-sentence intro in Japanese. Do NOT use simplifie
     return full_response
 
 
-def convert_markdown_to_html(text):
-    """
-    簡易的な Markdown -> HTML 変換。
-    特に Markdown テーブルを HTML テーブルに変換する。
-    """
+def convert_markdown_to_csv(text):
+    """MarkdownテーブルをパースしてCSV形式の文字列を返す"""
     lines = text.strip().split('\n')
-    html_output = []
     in_table = False
-    table_lines = []
+    csv_data = []
 
     for line in lines:
         if '|' in line and '---' not in line:
             if not in_table:
                 in_table = True
-                table_lines = [line]
-            else:
-                table_lines.append(line)
+            
+            # 先頭と末尾の '|' を除外して分割し、各セルの空白文字を削除
+            row = [cell.strip() for cell in line.strip().strip('|').split('|')]
+            csv_data.append(row)
         elif '---' in line and '|' in line:
-            # テーブルの区切り行は無視
             continue
         else:
             if in_table:
-                # テーブル終了、変換して追加
-                html_output.append(render_html_table(table_lines))
+                # 途中でテーブルが終わった場合
                 in_table = False
-                table_lines = []
-            html_output.append(f"<p>{line}</p>")
-    
-    if in_table:
-        html_output.append(render_html_table(table_lines))
 
+    if not csv_data:
+        return ""
+
+    # CSV文字列の生成
+    output = io.StringIO()
+    writer = csv.writer(output, lineterminator='\n')
+    writer.writerows(csv_data)
+    return output.getvalue()
+
+def convert_markdown_to_html_summary(text):
+    """
+    メール本文を簡略化するため、Markdownテーブル部分（|を含む行）を除外したサマリーのみをHTML化する。
+    """
+    lines = text.strip().split('\n')
+    html_output = []
+    
+    for line in lines:
+        if '|' in line:
+            continue
+        if line.strip() == '':
+            continue
+        html_output.append(f"<p>{line}</p>")
+    
     return "".join(html_output)
 
-def render_html_table(lines):
-    """Markdownの行リストをHTMLテーブルに変換"""
-    html = ['<table border="1" style="border-collapse: collapse; width: 100%; font-family: sans-serif;">']
-    for i, line in enumerate(lines):
-        cells = [c.strip() for c in line.split('|') if c.strip()]
-        tag = 'th' if i == 0 else 'td'
-        bg = 'background-color: #f2f2f2;' if i == 0 else ''
-        html.append('  <tr>')
-        for cell in cells:
-            html.append(f'    <{tag} style="border: 1px solid #ddd; padding: 8px; {bg}">{cell}</{tag}>')
-        html.append('  </tr>')
-    html.append('</table>')
-    return "".join(html)
-
 
 # ============================================================
-# メール送信
-# ============================================================
-def send_email(subject, body_markdown):
-    """Microsoft 365 (Outlook) SMTP で HTML レポートを送信"""
+    # メール送信
+    # ============================================================
+def send_email(subject, body_markdown, csv_filename="B2B_Leads.csv"):
+    """Microsoft 365 (Outlook) SMTP で HTML レポートと添付CSVを送信"""
     smtp_host = os.environ.get("SMTP_HOST", "smtp.office365.com")
     smtp_port = int(os.environ.get("SMTP_PORT", 587))
     smtp_user = os.environ.get("SMTP_USER")
     smtp_pass = os.environ.get("SMTP_PASS")
     notify_to = os.environ.get("NOTIFY_TO", smtp_user)
 
-    # Markdown を HTML に変換
+    # CSV生成
+    csv_string = convert_markdown_to_csv(body_markdown)
+
+    # レポート行数（データ件数）の概算（ヘッダーを除く）
+    lead_count = max(0, len(csv_string.strip().split('\n')) - 1) if csv_string else 0
+
+    # メール本文（HTML）の構築：表の部分は削除し、サマリー文に置き換える
     html_content = f"""
     <html>
     <head>
     <style>
       body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }}
       h1 {{ color: #0078d4; border-bottom: 2px solid #0078d4; padding-bottom: 10px; }}
+      .summary-box {{ background-color: #f9f9f9; border-left: 4px solid #0078d4; padding: 10px 15px; margin-bottom: 20px; }}
       .footer {{ margin-top: 30px; font-size: 0.8em; color: #666; border-top: 1px solid #ccc; padding-top: 10px; }}
     </style>
     </head>
     <body>
       <h1>医薬品 B2B 潜在顧客（リード）発掘レポート</h1>
-      {convert_markdown_to_html(body_markdown)}
+      <div class="summary-box">
+        <p>本日のB2Bリード抽出結果です。</p>
+        <p><strong>概算取得件数: {lead_count} 件</strong></p>
+        <p>詳細は添付のCSVファイル（<strong>{csv_filename}</strong>）を開いて、進捗管理シート等へコピー＆ペーストしてください。</p>
+      </div>
+      <hr>
+      <h3>AIからの傾向サマリー</h3>
+      {convert_markdown_to_html_summary(body_markdown)}
       <div class="footer">
         このメールは B2B Lead Generation Bot によって自動送信されています。<br>
         (github.com/Git-Nanayama/ems-notify)
@@ -222,14 +239,30 @@ def send_email(subject, body_markdown):
     if not all([smtp_user, smtp_pass]):
         print("⚠️ SMTP 設定不足。コンソールに出力します。")
         print("=" * 60)
-        print(body_markdown)
+        print(f"--- 添付予定のCSV ({csv_filename}) ---")
+        print(csv_string)
+        print("-" * 60)
+        print(f"--- HTML本文 ---")
+        print(html_content)
         print("=" * 60)
         return
 
-    msg = MIMEText(html_content, "html", "utf-8")
+    # マルチパートメールの作成
+    msg = MIMEMultipart()
     msg["Subject"] = Header(subject, "utf-8")
     msg["From"] = smtp_user
     msg["To"] = notify_to
+
+    # HTML本文のアタッチ
+    msg.attach(MIMEText(html_content, "html", "utf-8"))
+
+    # CSVファイルのアタッチ
+    if csv_string:
+        # BOMを追加してExcelでの文字化け（Shift-JIS誤認）を防止
+        csv_bytes = '\ufeff'.encode('utf8') + csv_string.encode('utf8')
+        part = MIMEApplication(csv_bytes, Name=csv_filename)
+        part['Content-Disposition'] = f'attachment; filename="{csv_filename}"'
+        msg.attach(part)
 
     try:
         with smtplib.SMTP(smtp_host, smtp_port) as server:
@@ -252,8 +285,8 @@ def send_email(subject, body_markdown):
                 server.login(smtp_user, smtp_pass)
                 server.send_message(msg_plain)
             print("✅ プレーンテキストで再送完了。")
-        except:
-            print("❌ 再送も失敗しました。")
+        except Exception as retry_e:
+            print(f"❌ 再送も失敗しました: {retry_e}")
 
 
 # ============================================================
@@ -271,10 +304,11 @@ def main():
         print(f"❌ 発掘失敗: {e}")
         report_content = f"B2B潜在顧客の発掘に失敗しました。\nエラー内容: {e}"
 
-    subject = f"【🎯B2Bリード】医薬品バイヤー・クリニック発掘レポート - {today}"
+    subject = f"【🎯B2Bリード】医薬品バイヤー発掘レポート - {today}"
+    csv_filename = f"B2B_Leads_{datetime.date.today().strftime('%Y%m%d')}.csv"
 
     print(f"\n📧 レポートを送信中...")
-    send_email(subject, report_content)
+    send_email(subject, report_content, csv_filename)
     print(f"\n✅ 完了。")
 
 
