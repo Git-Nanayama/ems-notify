@@ -97,32 +97,32 @@ def find_b2b_leads():
     utc_now = datetime.datetime.utcnow()
     hour = utc_now.hour
 
-    if hour >= 20 or hour == 0:
-        # UTC 21:00前後 (JST 朝6:00頃) -> Direct Pain/Buyers
+    if hour >= 22 or hour == 0:
+        # UTC 23:00前後 (JST 朝8:00頃トリガー -> 10:00頃着) -> Direct Pain/Buyers
         segment_name = "朝の部 (Direct Buyers)"
         segment_instruction = """
 === SEGMENT STRATEGY (MORNING: DIRECT BUYERS) ===
 Focus on finding DIRECT BUYERS (clinics, hospitals, specific doctors) expressing IMMEDIATE pain points. Look for keywords implying "shortage", "out of stock", "desperately looking for", "need a new supplier", or "cannot source". Connect these pain points to their potential need for importing authentic medication.
 """
     elif hour >= 1 and hour < 3:
-        # UTC 01:00前後 (JST 午前10:00頃) -> Quality Seekers
+        # UTC 01:00前後 (JST 午前10:00頃トリガー -> 12:00頃着) -> Quality Seekers
         segment_name = "昼前・午前の部 (Quality Seekers)"
         segment_instruction = """
 === SEGMENT STRATEGY (LATE MORNING: QUALITY SEEKERS) ===
 Focus on finding PREMIUM QUALITY SEEKERS (boutique clinics, aesthetic centers, high-end distributors). Look for targets emphasizing "authentic medicine", "Japanese quality", "J-GMP", "premium products", or those warning their patients about "fake drugs". They value quality over price.
 """
     else:
-        # UTC 04:00前後 (JST 午後13:00頃) 以降 -> Distributors / Partners
+        # UTC 03:00前後 (JST 午後12:00頃トリガー -> 14:00頃着) 以降 -> Distributors / Partners
         segment_name = "午後の部 (Distributors / Partners)"
         segment_instruction = """
 === SEGMENT STRATEGY (AFTERNOON: B2B PARTNERS) ===
 Focus explicitly on WHOLESALERS, IMPORTERS, and B2B DISTRIBUTORS. Look for keywords implying "B2B partnership", "pharma distributor", "seeking international manufacturers", "looking for import opportunities", or "wholesale supply chain". We want companies capable of buying in bulk.
 """
 
-    prompt = f"""Today is {date_str}. Your current focus group is {group_name}.
+    prompt_base = f"""Today is {date_str}. Your current focus group is {group_name}.
 
 You are an expert B2B Lead Generation Specialist. 
-YOUR TASK: Identify 30-40 high-value B2B targets on X (Twitter) in the following regions: {regions}.
+YOUR TASK: Identify 15 high-value B2B targets on X (Twitter) in the following regions: {regions}.
 
 === REGIONAL STRATEGY & CORE PRODUCTS ===
 {focus_points}
@@ -152,50 +152,66 @@ Generate a MARKDOWN TABLE in JAPANESE (日本語):
    3. Call to Action: "We thought there might be a potential for business collaboration. If you have any interest in importing Japanese medical supplies, we would love to arrange a quick discussion."
 - **DM書き出し案（日本語訳）**: Provide a Japanese translation of the ice-breaker message above so the Japanese staff understands the intent.
 
-Include 30-40 actionable leads. Handles are critical. 
+Include EXACTLY 15 actionable leads. Handles are critical. 
 Only output the table and a one-sentence intro in Japanese. Do NOT use simplified Chinese in the output text."""
 
-    print(f"  [SDK] {group_name} / {segment_name} のB2Bリード検索中（目標30-40件）...")
+    print(f"  [SDK] {group_name} / {segment_name} のB2Bリード検索中（目標45件、3回ループ）...")
 
-    client = Client(api_key=api_key)
-    chat = client.chat.create(
-        model="grok-4-1-fast-reasoning",
-        tools=[
-            x_search(),
-            web_search(),
-        ],
-    )
-    chat.append(user_msg(prompt))
+    all_responses = []
+    found_handles = set()
 
-    full_response = ""
-    for response, chunk in chat.stream():
-        if chunk.content:
-            full_response += chunk.content
+    for i in range(3):
+        print(f"  [SDK] ループ {i+1}/3 実行中...")
+        
+        # 過去に見つけたアカウントを除外する指示を追加
+        exclusion_instruction = ""
+        if found_handles:
+            exclusion_instruction = f"\n\n=== EXCLUSION LIST ===\nDO NOT include the following accounts as they have already been found:\n{', '.join(found_handles)}\n"
 
-    print(f"  [SDK] レスポンス文字数: {len(full_response)} chars")
-    return full_response, segment_name
+        current_prompt = prompt_base + exclusion_instruction
+
+        client = Client(api_key=api_key)
+        chat = client.chat.create(
+            model="grok-4-1-fast-reasoning",
+            tools=[
+                x_search(),
+                web_search(),
+            ],
+        )
+        chat.append(user_msg(current_prompt))
+
+        full_response = ""
+        for response, chunk in chat.stream():
+            if chunk.content:
+                full_response += chunk.content
+
+        print(f"  [SDK] ループ {i+1} レスポンス文字数: {len(full_response)} chars")
+        all_responses.append(full_response)
+        
+        # レスポンスからアカウント名を抽出して次回の除外リストに追加
+        import re
+        handles = re.findall(r'(@[A-Za-z0-9_]+)', full_response)
+        found_handles.update(handles)
+        print(f"  [SDK] 累計獲得アカウント数（概算）: {len(found_handles)}")
+
+    # 3回分の文字列を結合。テーブルのヘッダーが重複するが、CSV変換処理で対応可能
+    combined_response = "\n\n".join(all_responses)
+
+    return combined_response, segment_name
 
 
 def convert_markdown_to_csv(text):
     """MarkdownテーブルをパースしてCSV形式の文字列を返す"""
     lines = text.strip().split('\n')
-    in_table = False
     csv_data = []
 
     for line in lines:
         if '|' in line and '---' not in line:
-            if not in_table:
-                in_table = True
-            
             # 先頭と末尾の '|' を除外して分割し、各セルの空白文字を削除
             row = [cell.strip() for cell in line.strip().strip('|').split('|')]
-            csv_data.append(row)
-        elif '---' in line and '|' in line:
-            continue
-        else:
-            if in_table:
-                # 途中でテーブルが終わった場合
-                in_table = False
+            # 対象のテーブル（列数が5以上）である場合のみ抽出
+            if len(row) >= 5:
+                csv_data.append(row)
 
     if not csv_data:
         return ""
@@ -208,7 +224,7 @@ def convert_markdown_to_csv(text):
 
 def convert_markdown_to_html_summary(text):
     """
-    メール本文を簡略化するため、Markdownテーブル部分（|を含む行）を除外したサマリーのみをHTML化する。
+    PC向けメール本文を簡略化するため、Markdownテーブル部分（|を含む行）を除外したサマリーのみをHTML化する。
     """
     lines = text.strip().split('\n')
     html_output = []
@@ -222,6 +238,40 @@ def convert_markdown_to_html_summary(text):
     
     return "".join(html_output)
 
+def create_mobile_friendly_html(report_content):
+    """
+    スマホのメールアプリでコピペしやすいように、
+    テーブル行から「宛先」と「DMテキスト」のみを抽出し
+    見やすいカード型レイアウトのHTMLブロックを生成する。
+    """
+    lines = report_content.strip().split('\n')
+    html_output = []
+    
+    for line in lines:
+        if '|' in line and '---' not in line:
+            cells = [cell.strip() for cell in line.strip().strip('|').split('|')]
+            if len(cells) >= 5:
+                account = cells[0]
+                dm_text = cells[4]
+                if "アカウント" in account or "ID" in account:
+                    continue
+                
+                # スマホコピー用のHTMLカード（長押しコピーしやすい枠付き）
+                card_html = f"""
+                <div style="margin-bottom: 25px; padding: 15px; background-color: #f8fafc; border-left: 5px solid #0ea5e9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                    <p style="margin: 0 0 5px 0; font-size: 0.9em; font-weight: bold; color: #0284c7;">▼宛先アカウント</p>
+                    <p style="margin: 0 0 15px 0; font-size: 1.1em; word-break: break-all;">{account}</p>
+                    <p style="margin: 0 0 5px 0; font-size: 0.9em; font-weight: bold; color: #475569;">▼DM用メッセージ (長押しで全選択コピー)</p>
+                    <p style="background-color: #ffffff; padding: 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: sans-serif; font-size: 1.05em; line-height: 1.5; margin: 0;">{dm_text}</p>
+                </div>
+                """
+                html_output.append(card_html)
+
+    if not html_output:
+        return "<p style='color:red;'>⚠️ 今回の抽出データには、コピペ可能なDM案が含まれていませんでした。</p>"
+        
+    return "".join(html_output)
+
 
 # ============================================================
     # メール送信
@@ -232,16 +282,26 @@ def send_email(subject, body_markdown, csv_filename="B2B_Leads.csv"):
     smtp_port = int(os.environ.get("SMTP_PORT", 587))
     smtp_user = os.environ.get("SMTP_USER")
     smtp_pass = os.environ.get("SMTP_PASS")
-    notify_to = os.environ.get("NOTIFY_TO", smtp_user)
+    
+    # PC向け（Outlook用）送信先
+    notify_to = os.environ.get("NOTIFY_TO", smtp_user or "logistics@kyomirai.com")
+    pc_addresses = [addr.strip() for addr in notify_to.split(',') if addr.strip()]
+    
+    # --------------------------------------------------------
+    # 2. スマホ向けメール（Gmail等）の構築 (コピペ用カードレイアウト・添付なし)
+    # --------------------------------------------------------
+    gmail_recipients_str = os.environ.get("GMAIL_RECIPIENTS", "")
+    mobile_addresses = [addr.strip() for addr in gmail_recipients_str.split(',') if addr.strip()]
+    mobile_friendly_blocks = create_mobile_friendly_html(body_markdown)
 
     # CSV生成
     csv_string = convert_markdown_to_csv(body_markdown)
-
-    # レポート行数（データ件数）の概算（ヘッダーを除く）
     lead_count = max(0, len(csv_string.strip().split('\n')) - 1) if csv_string else 0
 
-    # メール本文（HTML）の構築：表の部分は削除し、サマリー文に置き換える
-    html_content = f"""
+    # --------------------------------------------------------
+    # 1. PC向けメール（Outlook）の構築 (CSV添付あり)
+    # --------------------------------------------------------
+    pc_html_content = f"""
     <html>
     <head>
     <style>
@@ -257,6 +317,7 @@ def send_email(subject, body_markdown, csv_filename="B2B_Leads.csv"):
         <p>本日のB2Bリード抽出結果です。</p>
         <p><strong>概算取得件数: {lead_count} 件</strong></p>
         <p>詳細は添付のCSVファイル（<strong>{csv_filename}</strong>）を開いて、進捗管理シート等へコピー＆ペーストしてください。</p>
+        <p>※同僚の皆様あて（Gmail）には、スマホ用コピペレイアウトのメールを別途送信しています。</p>
       </div>
       <hr>
       <h3>AIからの傾向サマリー</h3>
@@ -269,57 +330,85 @@ def send_email(subject, body_markdown, csv_filename="B2B_Leads.csv"):
     </html>
     """
 
-    if not all([smtp_user, smtp_pass]):
-        print("⚠️ SMTP 設定不足。コンソールに出力します。")
-        print("=" * 60)
-        print(f"--- 添付予定のCSV ({csv_filename}) ---")
-        print(csv_string)
-        print("-" * 60)
-        print(f"--- HTML本文 ---")
-        print(html_content)
-        print("=" * 60)
-        return
+    msg_pc = MIMEMultipart()
+    msg_pc["Subject"] = Header(subject, "utf-8")
+    msg_pc["From"] = smtp_user
+    msg_pc["To"] = ", ".join(pc_addresses)
+    msg_pc.attach(MIMEText(pc_html_content, "html", "utf-8"))
 
-    # マルチパートメールの作成
-    msg = MIMEMultipart()
-    msg["Subject"] = Header(subject, "utf-8")
-    msg["From"] = smtp_user
-    msg["To"] = notify_to
-
-    # HTML本文のアタッチ
-    msg.attach(MIMEText(html_content, "html", "utf-8"))
-
-    # CSVファイルのアタッチ
     if csv_string:
-        # BOMを追加してExcelでの文字化け（Shift-JIS誤認）を防止
         csv_bytes = '\ufeff'.encode('utf8') + csv_string.encode('utf8')
         part = MIMEApplication(csv_bytes, Name=csv_filename)
         part['Content-Disposition'] = f'attachment; filename="{csv_filename}"'
-        msg.attach(part)
+        msg_pc.attach(part)
 
+    # --------------------------------------------------------
+    # 2. スマホ向けメール（Gmail等）の HTMLベース構築
+    # --------------------------------------------------------
+    mobile_html_content = ""
+    if mobile_addresses:
+        mobile_html_content = f"""
+        <html>
+        <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+          body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; margin: 10px; }}
+          h1 {{ color: #0078d4; border-bottom: 2px solid #0078d4; padding-bottom: 10px; font-size: 1.5em; }}
+          .summary-box {{ background-color: #f9f9f9; border-left: 4px solid #0078d4; padding: 15px; margin-bottom: 30px; border-radius: 0 4px 4px 0; }}
+          .footer {{ margin-top: 40px; font-size: 0.8em; color: #666; border-top: 1px solid #ccc; padding-top: 15px; text-align: center; }}
+        </style>
+        </head>
+        <body>
+          <h1>【B2Bリード】獲得レポート (全件表示)</h1>
+          <div class="summary-box">
+            <p style="margin-top:0;"><strong>取得リード数: {lead_count} 件</strong></p>
+            <p style="font-size: 0.9em; margin-bottom:0;">※各案件の詳細・課題は、管理用メール（Outlook）のCSVファイルから確認してください。</p>
+          </div>
+          <h3 style="color: #334155; margin-bottom: 15px;">▼スマホ用・DM送信コピペリスト</h3>
+          {mobile_friendly_blocks}
+          
+          <div class="footer">
+            このメールは B2B Lead Generation Bot によって自動送信されています。<br>
+            (github.com/Git-Nanayama/ems-notify)
+          </div>
+        </body>
+        </html>
+        """
+
+    # --------------------------------------------------------
+    # 3. SMTPサーバー経由での送信
+    # --------------------------------------------------------
     try:
         with smtplib.SMTP(smtp_host, smtp_port) as server:
             server.ehlo()
             server.starttls()
             server.login(smtp_user, smtp_pass)
-            server.send_message(msg)
-        print(f"✅ メール送信完了 → {notify_to}")
+            
+            # PC用メール送信
+            if pc_addresses:
+                server.send_message(msg_pc, from_addr=smtp_user, to_addrs=pc_addresses)
+                print(f"✅ PC用メール送信完了 → {', '.join(pc_addresses)}")
+            
+            # スマホ用メール送信（ループで各Gmailに「個別のメール」として1通ずつ送信）
+            if mobile_addresses and mobile_html_content:
+                success_count = 0
+                for addr in mobile_addresses:
+                    msg_mobile = MIMEMultipart()
+                    msg_mobile["Subject"] = Header(subject + " [スマホ用コピペ版]", "utf-8")
+                    msg_mobile["From"] = smtp_user
+                    msg_mobile["To"] = addr
+                    msg_mobile.attach(MIMEText(mobile_html_content, "html", "utf-8"))
+                    
+                    try:
+                        server.send_message(msg_mobile, from_addr=smtp_user, to_addrs=[addr])
+                        success_count += 1
+                    except Exception as e:
+                        print(f"❌ スマホ用メール送信失敗 ({addr}): {e}")
+                
+                print(f"✅ スマホ用メール(個別1to1)送信完了 → {success_count}/{len(mobile_addresses)}件")
+                
     except Exception as e:
         print(f"❌ メール送信失敗: {e}")
-        # 失敗時はプレーンテキストで再送試行
-        try:
-            msg_plain = MIMEText(body_markdown, "plain", "utf-8")
-            msg_plain["Subject"] = Header(subject, "utf-8")
-            msg_plain["From"] = smtp_user
-            msg_plain["To"] = notify_to
-            with smtplib.SMTP(smtp_host, smtp_port) as server:
-                server.ehlo()
-                server.starttls()
-                server.login(smtp_user, smtp_pass)
-                server.send_message(msg_plain)
-            print("✅ プレーンテキストで再送完了。")
-        except Exception as retry_e:
-            print(f"❌ 再送も失敗しました: {retry_e}")
 
 
 # ============================================================
@@ -343,6 +432,7 @@ def main():
 
     print(f"\n📧 レポートを送信中...")
     send_email(subject, report_content, csv_filename)
+    
     print(f"\n✅ 完了。")
 
 
