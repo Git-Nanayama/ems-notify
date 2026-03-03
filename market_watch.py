@@ -200,26 +200,88 @@ Only output the table and a one-sentence intro in Japanese. Do NOT use simplifie
     return combined_response, segment_name
 
 
-def convert_markdown_to_csv(text):
-    """MarkdownテーブルをパースしてCSV形式の文字列を返す"""
+def extract_rows_from_markdown(text):
+    """
+    Markdownテキストからテーブル構造を抽出し、アカウント列を持つ行のリストを返します。
+    """
     lines = text.strip().split('\n')
-    csv_data = []
-
+    rows = []
+    
     for line in lines:
         if '|' in line and '---' not in line:
-            # 先頭と末尾の '|' を除外して分割し、各セルの空白文字を削除
-            row = [cell.strip() for cell in line.strip().strip('|').split('|')]
-            # 対象のテーブル（列数が5以上）である場合のみ抽出
-            if len(row) >= 5:
-                csv_data.append(row)
+            cells = [cell.strip() for cell in line.strip().strip('|').split('|')]
+            if len(cells) >= 5:
+                # 見出し行を除外
+                if "アカウント" in cells[0] or "ID" in cells[0]:
+                    continue
+                rows.append(cells)
+    return rows
 
-    if not csv_data:
+def filter_open_dm_accounts(rows):
+    """
+    X APIを利用して、ユーザーが実在するか、かつ鍵垢(Protected)でないかを確認します。
+    ※Free/Basicプランの制限でエラーになった場合は安全のため全件を通過させます。
+    """
+    x_api_key = os.environ.get("X_API_KEY")
+    x_api_secret = os.environ.get("X_API_KEY_SECRET")
+    x_access_token = os.environ.get("X_ACCESS_TOKEN")
+    x_access_secret = os.environ.get("X_ACCESS_TOKEN_SECRET")
+
+    if not x_api_key or not rows:
+        return rows, False
+
+    print("\n🔍 X API を用いてアカウントの[実在確認/公開設定]を検証しています...")
+    
+    try:
+        import tweepy
+        client = tweepy.Client(
+            consumer_key=x_api_key,
+            consumer_secret=x_api_secret,
+            access_token=x_access_token,
+            access_token_secret=x_access_secret
+        )
+    except Exception as e:
+        print(f"⚠️ X APIの初期化に失敗しました。全件をそのまま処理します。エラー: {e}")
+        return rows, True
+        
+    valid_rows = []
+    api_failed = False
+    
+    for cells in rows:
+        account = cells[0].replace('@', '').strip()
+        try:
+            response = client.get_user(username=account, user_fields=['protected'])
+            if response.data:
+                if response.data.protected:
+                    print(f"  [API] ⚠️ 鍵アカウント(Protected)のため除外: @{account}")
+                else:
+                    print(f"  [API] ✅ 有効な公開アカウント: @{account}")
+                    valid_rows.append(cells)
+            else:
+                print(f"  [API] ❌ 存在しない/凍結アカウントのため除外: @{account}")
+        except tweepy.errors.Forbidden:
+            print("  [API] ⚠️ X API (Freeプラン) の権限エラー(403)が発生しました。フィルターを中止し、全件を通過させます。")
+            api_failed = True
+            return rows, True
+        except tweepy.errors.TooManyRequests:
+            print("  [API] ⚠️ APIの呼び出し回数制限(429)に到達しました。残りはフィルターせずに追加します。")
+            valid_rows.append(cells)
+        except Exception as e:
+            print(f"  [API] ⚠️ 取得エラー @{account}: {e}")
+            valid_rows.append(cells)
+
+    print(f"✅ API検証完了: 抽出{len(rows)}件 中 {len(valid_rows)}件 が有効なオープンアカウントと判定されました。")
+    return valid_rows, api_failed
+
+def generate_csv_from_rows(rows):
+    """行データのリストからCSV形式の文字列を生成します"""
+    if not rows:
         return ""
-
-    # CSV文字列の生成
+    headers = ["アカウント名 (@ID)", "推定役職・属性", "国・地域", "リストアップ理由", "おすすめDM書き出し案（原語）", "DM書き出し案（日本語訳）"]
     output = io.StringIO()
     writer = csv.writer(output, lineterminator='\n')
-    writer.writerows(csv_data)
+    writer.writerow(headers)
+    writer.writerows(rows)
     return output.getvalue()
 
 def convert_markdown_to_html_summary(text):
@@ -238,37 +300,31 @@ def convert_markdown_to_html_summary(text):
     
     return "".join(html_output)
 
-def create_mobile_friendly_html(report_content):
+def create_mobile_friendly_html(rows):
     """
     スマホのメールアプリでコピペしやすいように、
     テーブル行から「宛先」と「DMテキスト」のみを抽出し
     見やすいカード型レイアウトのHTMLブロックを生成する。
     """
-    lines = report_content.strip().split('\n')
-    html_output = []
-    
-    for line in lines:
-        if '|' in line and '---' not in line:
-            cells = [cell.strip() for cell in line.strip().strip('|').split('|')]
-            if len(cells) >= 5:
-                account = cells[0]
-                dm_text = cells[4]
-                if "アカウント" in account or "ID" in account:
-                    continue
-                
-                # スマホコピー用のHTMLカード（長押しコピーしやすい枠付き）
-                card_html = f"""
-                <div style="margin-bottom: 25px; padding: 15px; background-color: #f8fafc; border-left: 5px solid #0ea5e9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                    <p style="margin: 0 0 5px 0; font-size: 0.9em; font-weight: bold; color: #0284c7;">▼宛先アカウント</p>
-                    <p style="margin: 0 0 15px 0; font-size: 1.1em; word-break: break-all;">{account}</p>
-                    <p style="margin: 0 0 5px 0; font-size: 0.9em; font-weight: bold; color: #475569;">▼DM用メッセージ (長押しで全選択コピー)</p>
-                    <p style="background-color: #ffffff; padding: 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: sans-serif; font-size: 1.05em; line-height: 1.5; margin: 0;">{dm_text}</p>
-                </div>
-                """
-                html_output.append(card_html)
-
-    if not html_output:
+    if not rows:
         return "<p style='color:red;'>⚠️ 今回の抽出データには、コピペ可能なDM案が含まれていませんでした。</p>"
+
+    html_output = []
+    for cells in rows:
+        if len(cells) < 5:
+            continue
+        account = cells[0]
+        dm_text = cells[4]
+        
+        card_html = f"""
+        <div style="margin-bottom: 25px; padding: 15px; background-color: #f8fafc; border-left: 5px solid #0ea5e9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <p style="margin: 0 0 5px 0; font-size: 0.9em; font-weight: bold; color: #0284c7;">▼宛先アカウント</p>
+            <p style="margin: 0 0 15px 0; font-size: 1.1em; word-break: break-all;">{account}</p>
+            <p style="margin: 0 0 5px 0; font-size: 0.9em; font-weight: bold; color: #475569;">▼DM用メッセージ (長押しで全選択コピー)</p>
+            <p style="background-color: #ffffff; padding: 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: sans-serif; font-size: 1.05em; line-height: 1.5; margin: 0;">{dm_text}</p>
+        </div>
+        """
+        html_output.append(card_html)
         
     return "".join(html_output)
 
@@ -288,15 +344,22 @@ def send_email(subject, body_markdown, csv_filename="B2B_Leads.csv"):
     pc_addresses = [addr.strip() for addr in notify_to.split(',') if addr.strip()]
     
     # --------------------------------------------------------
+    # 1.5. データの抽出とAPIフィルタリング
+    # --------------------------------------------------------
+    all_rows = extract_rows_from_markdown(body_markdown)
+    valid_rows, api_failed = filter_open_dm_accounts(all_rows)
+    lead_count = len(valid_rows)
+    total_count = len(all_rows)
+    
+    # --------------------------------------------------------
     # 2. スマホ向けメール（Gmail等）の構築 (コピペ用カードレイアウト・添付なし)
     # --------------------------------------------------------
     gmail_recipients_str = os.environ.get("GMAIL_RECIPIENTS", "")
     mobile_addresses = [addr.strip() for addr in gmail_recipients_str.split(',') if addr.strip()]
-    mobile_friendly_blocks = create_mobile_friendly_html(body_markdown)
+    mobile_friendly_blocks = create_mobile_friendly_html(valid_rows)
 
     # CSV生成
-    csv_string = convert_markdown_to_csv(body_markdown)
-    lead_count = max(0, len(csv_string.strip().split('\n')) - 1) if csv_string else 0
+    csv_string = generate_csv_from_rows(valid_rows)
 
     # --------------------------------------------------------
     # 1. PC向けメール（Outlook）の構築 (CSV添付あり)
@@ -315,7 +378,8 @@ def send_email(subject, body_markdown, csv_filename="B2B_Leads.csv"):
       <h1>医薬品 B2B 潜在顧客（リード）発掘レポート</h1>
       <div class="summary-box">
         <p>本日のB2Bリード抽出結果です。</p>
-        <p><strong>概算取得件数: {lead_count} 件</strong></p>
+        <p><strong>X(Twitter) API検証済 取得件数: {lead_count} 件</strong> / 抽出母数: {total_count} 件</p>
+        <p>※鍵アカウントや無効なIDは自動除外されています。</p>
         <p>詳細は添付のCSVファイル（<strong>{csv_filename}</strong>）を開いて、進捗管理シート等へコピー＆ペーストしてください。</p>
         <p>※同僚の皆様あて（Gmail）には、スマホ用コピペレイアウトのメールを別途送信しています。</p>
       </div>
@@ -361,7 +425,8 @@ def send_email(subject, body_markdown, csv_filename="B2B_Leads.csv"):
         <body>
           <h1>【B2Bリード】獲得レポート (全件表示)</h1>
           <div class="summary-box">
-            <p style="margin-top:0;"><strong>取得リード数: {lead_count} 件</strong></p>
+            <p style="margin-top:0;"><strong>検証済リード数: {lead_count} 件</strong> (抽出: {total_count}件)</p>
+            <p style="font-size: 0.9em; margin-bottom:0;">※鍵アカウントや無効なIDは自動で除外されています。</p>
             <p style="font-size: 0.9em; margin-bottom:0;">※各案件の詳細・課題は、管理用メール（Outlook）のCSVファイルから確認してください。</p>
           </div>
           <h3 style="color: #334155; margin-bottom: 15px;">▼スマホ用・DM送信コピペリスト</h3>

@@ -1,0 +1,278 @@
+market-watch	Set up job	﻿2026-03-03T01:27:13.9475792Z Current runner version: '2.331.0'
+market-watch	Set up job	2026-03-03T01:27:13.9500634Z ##[group]Runner Image Provisioner
+market-watch	Set up job	2026-03-03T01:27:13.9501555Z Hosted Compute Agent
+market-watch	Set up job	2026-03-03T01:27:13.9502120Z Version: 20260213.493
+market-watch	Set up job	2026-03-03T01:27:13.9502834Z Commit: 5c115507f6dd24b8de37d8bbe0bb4509d0cc0fa3
+market-watch	Set up job	2026-03-03T01:27:13.9503595Z Build Date: 2026-02-13T00:28:41Z
+market-watch	Set up job	2026-03-03T01:27:13.9504274Z Worker ID: {d9785f7c-3efe-45cd-9fea-74f434031609}
+market-watch	Set up job	2026-03-03T01:27:13.9505245Z Azure Region: westus
+market-watch	Set up job	2026-03-03T01:27:13.9505850Z ##[endgroup]
+market-watch	Set up job	2026-03-03T01:27:13.9507358Z ##[group]Operating System
+market-watch	Set up job	2026-03-03T01:27:13.9508047Z Ubuntu
+market-watch	Set up job	2026-03-03T01:27:13.9508564Z 24.04.3
+market-watch	Set up job	2026-03-03T01:27:13.9509123Z LTS
+market-watch	Set up job	2026-03-03T01:27:13.9509626Z ##[endgroup]
+market-watch	Set up job	2026-03-03T01:27:13.9510174Z ##[group]Runner Image
+market-watch	Set up job	2026-03-03T01:27:13.9510817Z Image: ubuntu-24.04
+market-watch	Set up job	2026-03-03T01:27:13.9511381Z Version: 20260224.36.1
+market-watch	Set up job	2026-03-03T01:27:13.9512423Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260224.36/images/ubuntu/Ubuntu2404-Readme.md
+market-watch	Set up job	2026-03-03T01:27:13.9514224Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260224.36
+market-watch	Set up job	2026-03-03T01:27:13.9515577Z ##[endgroup]
+market-watch	Set up job	2026-03-03T01:27:13.9516961Z ##[group]GITHUB_TOKEN Permissions
+market-watch	Set up job	2026-03-03T01:27:13.9518875Z Contents: read
+market-watch	Set up job	2026-03-03T01:27:13.9519611Z Metadata: read
+market-watch	Set up job	2026-03-03T01:27:13.9520176Z Packages: read
+market-watch	Set up job	2026-03-03T01:27:13.9520787Z ##[endgroup]
+market-watch	Set up job	2026-03-03T01:27:13.9522914Z Secret source: Actions
+market-watch	Set up job	2026-03-03T01:27:13.9523813Z Prepare workflow directory
+market-watch	Set up job	2026-03-03T01:27:13.9848157Z Prepare all required actions
+market-watch	Set up job	2026-03-03T01:27:13.9885447Z Getting action download info
+market-watch	Set up job	2026-03-03T01:27:14.4612875Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+market-watch	Set up job	2026-03-03T01:27:14.6120633Z Download action repository 'actions/setup-python@v4' (SHA:7f4fc3e22c37d6ff65e88745f38bd3157c663f7c)
+market-watch	Set up job	2026-03-03T01:27:14.8600373Z Complete job name: market-watch
+market-watch	リポジトリをチェックアウト	﻿2026-03-03T01:27:14.9314761Z ##[group]Run actions/checkout@v4
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:14.9315877Z with:
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:14.9316357Z   repository: Git-Nanayama/ems-notify
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:14.9317050Z   token: ***
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:14.9317463Z   ssh-strict: true
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:14.9317894Z   ssh-user: git
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:14.9318342Z   persist-credentials: true
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:14.9318822Z   clean: true
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:14.9319248Z   sparse-checkout-cone-mode: true
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:14.9319752Z   fetch-depth: 1
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:14.9320161Z   fetch-tags: false
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:14.9320590Z   show-progress: true
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:14.9321019Z   lfs: false
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:14.9321417Z   submodules: false
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:14.9321847Z   set-safe-directory: true
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:14.9322500Z ##[endgroup]
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.0423492Z Syncing repository: Git-Nanayama/ems-notify
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.0425598Z ##[group]Getting Git version info
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.0426386Z Working directory is '/home/runner/work/ems-notify/ems-notify'
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.0427450Z [command]/usr/bin/git version
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.0570004Z git version 2.53.0
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.0612756Z ##[endgroup]
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.0631308Z Temporarily overriding HOME='/home/runner/work/_temp/23032fc6-f678-4586-9fa3-339ed3d84f91' before making global git config changes
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.0633189Z Adding repository directory to the temporary git global config as a safe directory
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.0650200Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/ems-notify/ems-notify
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.0698646Z Deleting the contents of '/home/runner/work/ems-notify/ems-notify'
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.0702604Z ##[group]Initializing the repository
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.0707762Z [command]/usr/bin/git init /home/runner/work/ems-notify/ems-notify
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.0805692Z hint: Using 'master' as the name for the initial branch. This default branch name
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.0807057Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.0808369Z hint: to use in all of your new repositories, which will suppress this warning,
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.0809732Z hint: call:
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.0810249Z hint:
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.0811144Z hint: 	git config --global init.defaultBranch <name>
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.0812251Z hint:
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.0813324Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.0815031Z hint: 'development'. The just-created branch can be renamed via this command:
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.0816638Z hint:
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.0817373Z hint: 	git branch -m <name>
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.0818173Z hint:
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.0819230Z hint: Disable this message with "git config set advice.defaultBranchName false"
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.0821112Z Initialized empty Git repository in /home/runner/work/ems-notify/ems-notify/.git/
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.0824099Z [command]/usr/bin/git remote add origin https://github.com/Git-Nanayama/ems-notify
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.0858735Z ##[endgroup]
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.0860037Z ##[group]Disabling automatic garbage collection
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.0863805Z [command]/usr/bin/git config --local gc.auto 0
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.0893818Z ##[endgroup]
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.0895374Z ##[group]Setting up auth
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.0901772Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.0934342Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.1263042Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.1293036Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.1526136Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.1558317Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.1807725Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.1844206Z ##[endgroup]
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.1845832Z ##[group]Fetching the repository
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.1854570Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +f8558b8dc386fd8a4ec03eeb057a2953559ff651:refs/remotes/origin/main
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.5680106Z From https://github.com/Git-Nanayama/ems-notify
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.5681895Z  * [new ref]         f8558b8dc386fd8a4ec03eeb057a2953559ff651 -> origin/main
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.5718171Z ##[endgroup]
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.5719595Z ##[group]Determining the checkout info
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.5721415Z ##[endgroup]
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.5727173Z [command]/usr/bin/git sparse-checkout disable
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.5772302Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.5803934Z ##[group]Checking out the ref
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.5806773Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.5857825Z Switched to a new branch 'main'
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.5859753Z branch 'main' set up to track 'origin/main'.
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.5867749Z ##[endgroup]
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.5904327Z [command]/usr/bin/git log -1 --format=%H
+market-watch	リポジトリをチェックアウト	2026-03-03T01:27:15.5928792Z f8558b8dc386fd8a4ec03eeb057a2953559ff651
+market-watch	Python 3.10 をセットアップ	﻿2026-03-03T01:27:15.6233938Z ##[group]Run actions/setup-python@v4
+market-watch	Python 3.10 をセットアップ	2026-03-03T01:27:15.6234969Z with:
+market-watch	Python 3.10 をセットアップ	2026-03-03T01:27:15.6235874Z   python-version: 3.10
+market-watch	Python 3.10 をセットアップ	2026-03-03T01:27:15.6236697Z   check-latest: false
+market-watch	Python 3.10 をセットアップ	2026-03-03T01:27:15.6237742Z   token: ***
+market-watch	Python 3.10 をセットアップ	2026-03-03T01:27:15.6238473Z   update-environment: true
+market-watch	Python 3.10 をセットアップ	2026-03-03T01:27:15.6239361Z   allow-prereleases: false
+market-watch	Python 3.10 をセットアップ	2026-03-03T01:27:15.6240194Z ##[endgroup]
+market-watch	Python 3.10 をセットアップ	2026-03-03T01:27:15.7973657Z ##[group]Installed versions
+market-watch	Python 3.10 をセットアップ	2026-03-03T01:27:15.8737191Z Successfully set up CPython (3.10.19)
+market-watch	Python 3.10 をセットアップ	2026-03-03T01:27:15.8740274Z ##[endgroup]
+market-watch	依存ライブラリをインストール	﻿2026-03-03T01:27:15.8892898Z ##[group]Run python -m pip install --upgrade pip
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:15.8894540Z [36;1mpython -m pip install --upgrade pip[0m
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:15.8896260Z [36;1mpip install xai-sdk python-dotenv[0m
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:15.9010298Z shell: /usr/bin/bash -e {0}
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:15.9011471Z env:
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:15.9012629Z   pythonLocation: /opt/hostedtoolcache/Python/3.10.19/x64
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:15.9014532Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.10.19/x64/lib/pkgconfig
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:15.9016816Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.19/x64
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:15.9018588Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.19/x64
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:15.9020357Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.19/x64
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:15.9022126Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.10.19/x64/lib
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:15.9023651Z ##[endgroup]
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:18.9004269Z Requirement already satisfied: pip in /opt/hostedtoolcache/Python/3.10.19/x64/lib/python3.10/site-packages (26.0.1)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:20.3639509Z Collecting xai-sdk
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:20.4434151Z   Downloading xai_sdk-1.7.0-py3-none-any.whl.metadata (26 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:20.4852275Z Collecting python-dotenv
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:20.4884525Z   Downloading python_dotenv-1.2.2-py3-none-any.whl.metadata (27 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:21.6888951Z Collecting aiohttp<4,>=3.8.6 (from xai-sdk)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:21.6929231Z   Downloading aiohttp-3.13.3-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (8.1 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:21.7113436Z Collecting googleapis-common-protos<2,>=1.65.0 (from xai-sdk)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:21.7150229Z   Downloading googleapis_common_protos-1.72.0-py3-none-any.whl.metadata (9.4 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:22.3089294Z Collecting grpcio<2,>=1.72.1 (from xai-sdk)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:22.3131593Z   Downloading grpcio-1.78.0-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (3.8 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:22.3325599Z Collecting opentelemetry-sdk<2,>=1.36.0 (from xai-sdk)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:22.3418026Z   Downloading opentelemetry_sdk-1.39.1-py3-none-any.whl.metadata (1.5 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:22.3568952Z Collecting packaging<26,>=25.0 (from xai-sdk)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:22.3609347Z   Downloading packaging-25.0-py3-none-any.whl.metadata (3.3 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:22.5359657Z Collecting protobuf<7,>=5.29.4 (from xai-sdk)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:22.5397193Z   Downloading protobuf-6.33.5-cp39-abi3-manylinux2014_x86_64.whl.metadata (593 bytes)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:22.6973211Z Collecting pydantic<3,>=2.5.3 (from xai-sdk)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:22.7017040Z   Downloading pydantic-2.12.5-py3-none-any.whl.metadata (90 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:22.7289266Z Collecting requests<3,>=2.31.0 (from xai-sdk)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:22.7322801Z   Downloading requests-2.32.5-py3-none-any.whl.metadata (4.9 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:22.7466764Z Collecting aiohappyeyeballs>=2.5.0 (from aiohttp<4,>=3.8.6->xai-sdk)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:22.7505347Z   Downloading aiohappyeyeballs-2.6.1-py3-none-any.whl.metadata (5.9 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:22.7592795Z Collecting aiosignal>=1.4.0 (from aiohttp<4,>=3.8.6->xai-sdk)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:22.7647553Z   Downloading aiosignal-1.4.0-py3-none-any.whl.metadata (3.7 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:22.7758425Z Collecting async-timeout<6.0,>=4.0 (from aiohttp<4,>=3.8.6->xai-sdk)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:22.7788101Z   Downloading async_timeout-5.0.1-py3-none-any.whl.metadata (5.1 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:22.7924030Z Collecting attrs>=17.3.0 (from aiohttp<4,>=3.8.6->xai-sdk)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:22.7974574Z   Downloading attrs-25.4.0-py3-none-any.whl.metadata (10 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:22.8767508Z Collecting frozenlist>=1.1.1 (from aiohttp<4,>=3.8.6->xai-sdk)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:22.8813345Z   Downloading frozenlist-1.8.0-cp310-cp310-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (20 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:23.2101521Z Collecting multidict<7.0,>=4.5 (from aiohttp<4,>=3.8.6->xai-sdk)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:23.2136266Z   Downloading multidict-6.7.1-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (5.3 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:23.2747752Z Collecting propcache>=0.2.0 (from aiohttp<4,>=3.8.6->xai-sdk)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:23.2779702Z   Downloading propcache-0.4.1-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (13 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:23.5751812Z Collecting yarl<2.0,>=1.17.0 (from aiohttp<4,>=3.8.6->xai-sdk)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:23.5787903Z   Downloading yarl-1.23.0-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (79 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:23.6175964Z Collecting typing-extensions~=4.12 (from grpcio<2,>=1.72.1->xai-sdk)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:23.6207804Z   Downloading typing_extensions-4.15.0-py3-none-any.whl.metadata (3.3 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:23.6419422Z Collecting opentelemetry-api==1.39.1 (from opentelemetry-sdk<2,>=1.36.0->xai-sdk)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:23.6450164Z   Downloading opentelemetry_api-1.39.1-py3-none-any.whl.metadata (1.5 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:23.6600561Z Collecting opentelemetry-semantic-conventions==0.60b1 (from opentelemetry-sdk<2,>=1.36.0->xai-sdk)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:23.6631286Z   Downloading opentelemetry_semantic_conventions-0.60b1-py3-none-any.whl.metadata (2.4 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:23.6938795Z Collecting importlib-metadata<8.8.0,>=6.0 (from opentelemetry-api==1.39.1->opentelemetry-sdk<2,>=1.36.0->xai-sdk)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:23.6976016Z   Downloading importlib_metadata-8.7.1-py3-none-any.whl.metadata (4.7 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:23.7169990Z Collecting zipp>=3.20 (from importlib-metadata<8.8.0,>=6.0->opentelemetry-api==1.39.1->opentelemetry-sdk<2,>=1.36.0->xai-sdk)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:23.7199944Z   Downloading zipp-3.23.0-py3-none-any.whl.metadata (3.6 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:23.7323687Z Collecting annotated-types>=0.6.0 (from pydantic<3,>=2.5.3->xai-sdk)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:23.7352919Z   Downloading annotated_types-0.7.0-py3-none-any.whl.metadata (15 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:24.6160958Z Collecting pydantic-core==2.41.5 (from pydantic<3,>=2.5.3->xai-sdk)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:24.6198554Z   Downloading pydantic_core-2.41.5-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (7.3 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:24.6324067Z Collecting typing-inspection>=0.4.2 (from pydantic<3,>=2.5.3->xai-sdk)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:24.6355372Z   Downloading typing_inspection-0.4.2-py3-none-any.whl.metadata (2.6 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:24.7269250Z Collecting charset_normalizer<4,>=2 (from requests<3,>=2.31.0->xai-sdk)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:24.7306146Z   Downloading charset_normalizer-3.4.4-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (37 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:24.7515849Z Collecting idna<4,>=2.5 (from requests<3,>=2.31.0->xai-sdk)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:24.7517282Z   Downloading idna-3.11-py3-none-any.whl.metadata (8.4 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:24.7744604Z Collecting urllib3<3,>=1.21.1 (from requests<3,>=2.31.0->xai-sdk)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:24.7777425Z   Downloading urllib3-2.6.3-py3-none-any.whl.metadata (6.9 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:24.7984211Z Collecting certifi>=2017.4.17 (from requests<3,>=2.31.0->xai-sdk)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:24.8019722Z   Downloading certifi-2026.2.25-py3-none-any.whl.metadata (2.5 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:24.8349400Z Downloading xai_sdk-1.7.0-py3-none-any.whl (241 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:24.8414377Z Downloading aiohttp-3.13.3-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (1.7 MB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:24.8526571Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.7/1.7 MB 172.6 MB/s  0:00:00
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:24.8557971Z Downloading async_timeout-5.0.1-py3-none-any.whl (6.2 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:24.8611165Z Downloading googleapis_common_protos-1.72.0-py3-none-any.whl (297 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:24.8689437Z Downloading grpcio-1.78.0-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (6.7 MB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:24.9003260Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 6.7/6.7 MB 228.2 MB/s  0:00:00
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:24.9035001Z Downloading multidict-6.7.1-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (243 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:24.9132937Z Downloading opentelemetry_sdk-1.39.1-py3-none-any.whl (132 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:24.9194155Z Downloading opentelemetry_api-1.39.1-py3-none-any.whl (66 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:24.9254800Z Downloading opentelemetry_semantic_conventions-0.60b1-py3-none-any.whl (219 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:24.9313994Z Downloading importlib_metadata-8.7.1-py3-none-any.whl (27 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:24.9364279Z Downloading packaging-25.0-py3-none-any.whl (66 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:24.9421239Z Downloading protobuf-6.33.5-cp39-abi3-manylinux2014_x86_64.whl (323 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:24.9482360Z Downloading pydantic-2.12.5-py3-none-any.whl (463 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:24.9556269Z Downloading pydantic_core-2.41.5-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.1 MB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:24.9679980Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 187.3 MB/s  0:00:00
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:24.9708489Z Downloading requests-2.32.5-py3-none-any.whl (64 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:24.9777764Z Downloading charset_normalizer-3.4.4-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (153 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:24.9831831Z Downloading idna-3.11-py3-none-any.whl (71 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:24.9884540Z Downloading typing_extensions-4.15.0-py3-none-any.whl (44 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:24.9976026Z Downloading urllib3-2.6.3-py3-none-any.whl (131 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:25.0034485Z Downloading yarl-1.23.0-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (102 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:25.0095703Z Downloading python_dotenv-1.2.2-py3-none-any.whl (22 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:25.0144174Z Downloading aiohappyeyeballs-2.6.1-py3-none-any.whl (15 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:25.0194601Z Downloading aiosignal-1.4.0-py3-none-any.whl (7.5 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:25.0247948Z Downloading annotated_types-0.7.0-py3-none-any.whl (13 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:25.0311504Z Downloading attrs-25.4.0-py3-none-any.whl (67 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:25.0362531Z Downloading certifi-2026.2.25-py3-none-any.whl (153 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:25.0425879Z Downloading frozenlist-1.8.0-cp310-cp310-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (219 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:25.0486511Z Downloading propcache-0.4.1-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (196 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:25.0544991Z Downloading typing_inspection-0.4.2-py3-none-any.whl (14 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:25.0608910Z Downloading zipp-3.23.0-py3-none-any.whl (10 kB)
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:25.1717921Z Installing collected packages: zipp, urllib3, typing-extensions, python-dotenv, protobuf, propcache, packaging, idna, frozenlist, charset_normalizer, certifi, attrs, async-timeout, annotated-types, aiohappyeyeballs, typing-inspection, requests, pydantic-core, multidict, importlib-metadata, grpcio, googleapis-common-protos, aiosignal, yarl, pydantic, opentelemetry-api, opentelemetry-semantic-conventions, aiohttp, opentelemetry-sdk, xai-sdk
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:26.6867159Z 
+market-watch	依存ライブラリをインストール	2026-03-03T01:27:26.6918703Z Successfully installed aiohappyeyeballs-2.6.1 aiohttp-3.13.3 aiosignal-1.4.0 annotated-types-0.7.0 async-timeout-5.0.1 attrs-25.4.0 certifi-2026.2.25 charset_normalizer-3.4.4 frozenlist-1.8.0 googleapis-common-protos-1.72.0 grpcio-1.78.0 idna-3.11 importlib-metadata-8.7.1 multidict-6.7.1 opentelemetry-api-1.39.1 opentelemetry-sdk-1.39.1 opentelemetry-semantic-conventions-0.60b1 packaging-25.0 propcache-0.4.1 protobuf-6.33.5 pydantic-2.12.5 pydantic-core-2.41.5 python-dotenv-1.2.2 requests-2.32.5 typing-extensions-4.15.0 typing-inspection-0.4.2 urllib3-2.6.3 xai-sdk-1.7.0 yarl-1.23.0 zipp-3.23.0
+market-watch	市場監視スクリプトを実行	﻿2026-03-03T01:27:27.2067608Z ##[group]Run python market_watch.py
+market-watch	市場監視スクリプトを実行	2026-03-03T01:27:27.2067949Z [36;1mpython market_watch.py[0m
+market-watch	市場監視スクリプトを実行	2026-03-03T01:27:27.2119719Z shell: /usr/bin/bash -e {0}
+market-watch	市場監視スクリプトを実行	2026-03-03T01:27:27.2119967Z env:
+market-watch	市場監視スクリプトを実行	2026-03-03T01:27:27.2120224Z   pythonLocation: /opt/hostedtoolcache/Python/3.10.19/x64
+market-watch	市場監視スクリプトを実行	2026-03-03T01:27:27.2120656Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.10.19/x64/lib/pkgconfig
+market-watch	市場監視スクリプトを実行	2026-03-03T01:27:27.2121090Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.19/x64
+market-watch	市場監視スクリプトを実行	2026-03-03T01:27:27.2121673Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.19/x64
+market-watch	市場監視スクリプトを実行	2026-03-03T01:27:27.2122067Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.10.19/x64
+market-watch	市場監視スクリプトを実行	2026-03-03T01:27:27.2122453Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.10.19/x64/lib
+market-watch	市場監視スクリプトを実行	2026-03-03T01:27:27.2123154Z   GROK_API_KEY: ***
+market-watch	市場監視スクリプトを実行	2026-03-03T01:27:27.2123395Z   SMTP_HOST: ***
+market-watch	市場監視スクリプトを実行	2026-03-03T01:27:27.2123594Z   SMTP_PORT: ***
+market-watch	市場監視スクリプトを実行	2026-03-03T01:27:27.2123802Z   SMTP_USER: ***
+market-watch	市場監視スクリプトを実行	2026-03-03T01:27:27.2124007Z   SMTP_PASS: ***
+market-watch	市場監視スクリプトを実行	2026-03-03T01:27:27.2124211Z   NOTIFY_TO: logistics@kyomirai.com
+market-watch	市場監視スクリプトを実行	2026-03-03T01:27:27.2125590Z   GMAIL_RECIPIENTS: kyomirai.fax@gmail.com,kenji1989kyomirai@gmail.com,yumi1990kyomirai@gmail.com,daiki1991kyomirai@gmail.com,hiroshi1992kyomirai@gmail.com,yuki1993kyomirai@gmail.com,taro1994kyomirai@gmail.com,kei1995kyomirai@gmail.com,nasser1996kyomirai@gmail.com
+market-watch	市場監視スクリプトを実行	2026-03-03T01:27:27.2126693Z ##[endgroup]
+market-watch	市場監視スクリプトを実行	2026-03-03T01:32:03.4864246Z 🚀 B2B Pharma Lead Generation Bot 起動 (2026/03/03)
+market-watch	市場監視スクリプトを実行	2026-03-03T01:32:03.4865042Z ============================================================
+market-watch	市場監視スクリプトを実行	2026-03-03T01:32:03.4865884Z 
+market-watch	市場監視スクリプトを実行	2026-03-03T01:32:03.4866129Z 🔍 インテント分析によるバイヤー候補の発掘中...
+market-watch	市場監視スクリプトを実行	2026-03-03T01:32:03.4867879Z   [SDK] Group B: East Asia (Taiwan, Hong Kong, Singapore) / 昼前・午前の部 (Quality Seekers) のB2Bリード検索中（目標45件、3回ループ）...
+market-watch	市場監視スクリプトを実行	2026-03-03T01:32:03.4868872Z   [SDK] ループ 1/3 実行中...
+market-watch	市場監視スクリプトを実行	2026-03-03T01:32:03.4869357Z   [SDK] ループ 1 レスポンス文字数: 8970 chars
+market-watch	市場監視スクリプトを実行	2026-03-03T01:32:03.4869998Z   [SDK] 累計獲得アカウント数（概算）: 16
+market-watch	市場監視スクリプトを実行	2026-03-03T01:32:03.4870336Z   [SDK] ループ 2/3 実行中...
+market-watch	市場監視スクリプトを実行	2026-03-03T01:32:03.4870628Z   [SDK] ループ 2 レスポンス文字数: 9547 chars
+market-watch	市場監視スクリプトを実行	2026-03-03T01:32:03.4870973Z   [SDK] 累計獲得アカウント数（概算）: 31
+market-watch	市場監視スクリプトを実行	2026-03-03T01:32:03.4871254Z   [SDK] ループ 3/3 実行中...
+market-watch	市場監視スクリプトを実行	2026-03-03T01:32:03.4871534Z   [SDK] ループ 3 レスポンス文字数: 9174 chars
+market-watch	市場監視スクリプトを実行	2026-03-03T01:32:03.4871840Z   [SDK] 累計獲得アカウント数（概算）: 46
+market-watch	市場監視スクリプトを実行	2026-03-03T01:32:03.4872005Z 
+market-watch	市場監視スクリプトを実行	2026-03-03T01:32:03.4872125Z 📧 レポートを送信中...
+market-watch	市場監視スクリプトを実行	2026-03-03T01:32:03.4872456Z ✅ PC用メール送信完了 → logistics@kyomirai.com
+market-watch	市場監視スクリプトを実行	2026-03-03T01:32:03.4872812Z ✅ スマホ用メール(個別1to1)送信完了 → 9/9件
+market-watch	市場監視スクリプトを実行	2026-03-03T01:32:03.4872987Z 
+market-watch	市場監視スクリプトを実行	2026-03-03T01:32:03.4873107Z ✅ 完了。
+market-watch	Post Python 3.10 をセットアップ	﻿2026-03-03T01:32:03.5303754Z Post job cleanup.
+market-watch	Post リポジトリをチェックアウト	﻿2026-03-03T01:32:03.6985776Z Post job cleanup.
+market-watch	Post リポジトリをチェックアウト	2026-03-03T01:32:03.7953908Z [command]/usr/bin/git version
+market-watch	Post リポジトリをチェックアウト	2026-03-03T01:32:03.7991074Z git version 2.53.0
+market-watch	Post リポジトリをチェックアウト	2026-03-03T01:32:03.8037100Z Temporarily overriding HOME='/home/runner/work/_temp/5777d001-a378-4d56-95f9-33782a604120' before making global git config changes
+market-watch	Post リポジトリをチェックアウト	2026-03-03T01:32:03.8038472Z Adding repository directory to the temporary git global config as a safe directory
+market-watch	Post リポジトリをチェックアウト	2026-03-03T01:32:03.8043567Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/ems-notify/ems-notify
+market-watch	Post リポジトリをチェックアウト	2026-03-03T01:32:03.8081781Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+market-watch	Post リポジトリをチェックアウト	2026-03-03T01:32:03.8117145Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+market-watch	Post リポジトリをチェックアウト	2026-03-03T01:32:03.8364235Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+market-watch	Post リポジトリをチェックアウト	2026-03-03T01:32:03.8386354Z http.https://github.com/.extraheader
+market-watch	Post リポジトリをチェックアウト	2026-03-03T01:32:03.8399356Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+market-watch	Post リポジトリをチェックアウト	2026-03-03T01:32:03.8433065Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+market-watch	Post リポジトリをチェックアウト	2026-03-03T01:32:03.8668034Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+market-watch	Post リポジトリをチェックアウト	2026-03-03T01:32:03.8700436Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+market-watch	Complete job	﻿2026-03-03T01:32:03.9057313Z Cleaning up orphan processes

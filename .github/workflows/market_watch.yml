@@ -24,7 +24,7 @@ jobs:
       - name: 依存ライブラリをインストール
         run: |
           python -m pip install --upgrade pip
-          pip install xai-sdk python-dotenv
+          pip install xai-sdk python-dotenv tweepy
 
       - name: 市場監視スクリプトを実行
         run: python market_watch.py
@@ -37,3 +37,7 @@ jobs:
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
           NOTIFY_TO: logistics@kyomirai.com
           GMAIL_RECIPIENTS: "kyomirai.fax@gmail.com,kenji1989kyomirai@gmail.com,yumi1990kyomirai@gmail.com,daiki1991kyomirai@gmail.com,hiroshi1992kyomirai@gmail.com,yuki1993kyomirai@gmail.com,taro1994kyomirai@gmail.com,kei1995kyomirai@gmail.com,nasser1996kyomirai@gmail.com"
+          X_API_KEY: ${{ secrets.X_API_KEY }}
+          X_API_KEY_SECRET: ${{ secrets.X_API_KEY_SECRET }}
+          X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+          X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
