@@ -144,13 +144,13 @@ You MUST construct your X (Twitter) search queries using the native languages of
 
 === OUTPUT FORMAT ===
 Generate a MARKDOWN TABLE in JAPANESE (日本語):
-| アカウント名 (@ID) | 推定役職・属性 | 国・地域 | リストアップ理由 (課題、地域性、購買意欲など) | おすすめDM書き出し案（原語） | DM書き出し案（日本語訳） |
+| アカウント名 (@ID) | 推定役職・属性 | 国・地域 | リプライ対象のポスト(URLまたは内容要約) | おすすめリプライ文面（原語） | リプライ文面（日本語訳） |
 
-- **おすすめDM書き出し案（原語）**: Create a forceful, direct B2B sales pitch (in English or native language) structured in the following sequence:
-   1. Introduction: "We are Asakusa Pharmacy, an authorized distributor of authentic Japanese pharmaceuticals."
-   2. Hook (Personalized): "We are looking to expand internationally, and came across your post about [insert their specific post topic/pain point]."
-   3. Call to Action: "We thought there might be a potential for business collaboration. If you have any interest in importing Japanese medical supplies, we would love to arrange a quick discussion."
-- **DM書き出し案（日本語訳）**: Provide a Japanese translation of the ice-breaker message above so the Japanese staff understands the intent.
+- **リプライ対象のポスト**: Find a recent, specific post (tweet) from this user discussing business, industry trends, shortages, or related topics. Provide the URL or a short summary.
+- **おすすめリプライ文面（原語）**: Create a contextual, professional public reply (mention) to that specific post. 
+   - DO NOT just say "We sell drugs, DM us". Instead, acknowledge their post contextualy.
+   - Example sequence: "Great insight on [topic]! At Kyomirai (Japan), we're also seeing this trend. We might be able to support your clinic with our Japanese medical supplies. Would love to exchange insights via DM if you're open to it."
+- **リプライ文面（日本語訳）**: Provide a Japanese translation of the reply.
 
 Include EXACTLY 15 actionable leads. Handles are critical. 
 Only output the table and a one-sentence intro in Japanese. Do NOT use simplified Chinese in the output text."""
@@ -217,67 +217,11 @@ def extract_rows_from_markdown(text):
                 rows.append(cells)
     return rows
 
-def filter_open_dm_accounts(rows):
-    """
-    X APIを利用して、ユーザーが実在するか、かつ鍵垢(Protected)でないかを確認します。
-    ※Free/Basicプランの制限でエラーになった場合は安全のため全件を通過させます。
-    """
-    x_api_key = os.environ.get("X_API_KEY")
-    x_api_secret = os.environ.get("X_API_KEY_SECRET")
-    x_access_token = os.environ.get("X_ACCESS_TOKEN")
-    x_access_secret = os.environ.get("X_ACCESS_TOKEN_SECRET")
-
-    if not x_api_key or not rows:
-        return rows, False
-
-    print("\n🔍 X API を用いてアカウントの[実在確認/公開設定]を検証しています...")
-    
-    try:
-        import tweepy
-        client = tweepy.Client(
-            consumer_key=x_api_key,
-            consumer_secret=x_api_secret,
-            access_token=x_access_token,
-            access_token_secret=x_access_secret
-        )
-    except Exception as e:
-        print(f"⚠️ X APIの初期化に失敗しました。全件をそのまま処理します。エラー: {e}")
-        return rows, True
-        
-    valid_rows = []
-    api_failed = False
-    
-    for cells in rows:
-        account = cells[0].replace('@', '').strip()
-        try:
-            response = client.get_user(username=account, user_fields=['protected'])
-            if response.data:
-                if response.data.protected:
-                    print(f"  [API] ⚠️ 鍵アカウント(Protected)のため除外: @{account}")
-                else:
-                    print(f"  [API] ✅ 有効な公開アカウント: @{account}")
-                    valid_rows.append(cells)
-            else:
-                print(f"  [API] ❌ 存在しない/凍結アカウントのため除外: @{account}")
-        except tweepy.errors.Forbidden:
-            print("  [API] ⚠️ X API (Freeプラン) の権限エラー(403)が発生しました。フィルターを中止し、全件を通過させます。")
-            api_failed = True
-            return rows, True
-        except tweepy.errors.TooManyRequests:
-            print("  [API] ⚠️ APIの呼び出し回数制限(429)に到達しました。残りはフィルターせずに追加します。")
-            valid_rows.append(cells)
-        except Exception as e:
-            print(f"  [API] ⚠️ 取得エラー @{account}: {e}")
-            valid_rows.append(cells)
-
-    print(f"✅ API検証完了: 抽出{len(rows)}件 中 {len(valid_rows)}件 が有効なオープンアカウントと判定されました。")
-    return valid_rows, api_failed
-
 def generate_csv_from_rows(rows):
     """行データのリストからCSV形式の文字列を生成します"""
     if not rows:
         return ""
-    headers = ["アカウント名 (@ID)", "推定役職・属性", "国・地域", "リストアップ理由", "おすすめDM書き出し案（原語）", "DM書き出し案（日本語訳）"]
+    headers = ["アカウント名 (@ID)", "推定役職・属性", "国・地域", "リプライ対象のポスト(URL/内容)", "おすすめリプライ文面（原語）", "リプライ文面（日本語訳）"]
     output = io.StringIO()
     writer = csv.writer(output, lineterminator='\n')
     writer.writerow(headers)
@@ -318,9 +262,9 @@ def create_mobile_friendly_html(rows):
         
         card_html = f"""
         <div style="margin-bottom: 25px; padding: 15px; background-color: #f8fafc; border-left: 5px solid #0ea5e9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-            <p style="margin: 0 0 5px 0; font-size: 0.9em; font-weight: bold; color: #0284c7;">▼宛先アカウント</p>
-            <p style="margin: 0 0 15px 0; font-size: 1.1em; word-break: break-all;">{account}</p>
-            <p style="margin: 0 0 5px 0; font-size: 0.9em; font-weight: bold; color: #475569;">▼DM用メッセージ (長押しで全選択コピー)</p>
+            <p style="margin: 0 0 5px 0; font-size: 0.9em; font-weight: bold; color: #0284c7;">▼宛先アカウント (対象ポスト)</p>
+            <p style="margin: 0 0 15px 0; font-size: 1.1em; word-break: break-all;">{account}<br><span style="font-size: 0.8em; color: #64748b;">(タップして対象ポストを開く: {cells[3]})</span></p>
+            <p style="margin: 0 0 5px 0; font-size: 0.9em; font-weight: bold; color: #475569;">▼リプライ用メッセージ (長押しで全選択コピー)</p>
             <p style="background-color: #ffffff; padding: 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: sans-serif; font-size: 1.05em; line-height: 1.5; margin: 0;">{dm_text}</p>
         </div>
         """
@@ -344,12 +288,10 @@ def send_email(subject, body_markdown, csv_filename="B2B_Leads.csv"):
     pc_addresses = [addr.strip() for addr in notify_to.split(',') if addr.strip()]
     
     # --------------------------------------------------------
-    # 1.5. データの抽出とAPIフィルタリング
+    # 1.5. データの抽出
     # --------------------------------------------------------
-    all_rows = extract_rows_from_markdown(body_markdown)
-    valid_rows, api_failed = filter_open_dm_accounts(all_rows)
+    valid_rows = extract_rows_from_markdown(body_markdown)
     lead_count = len(valid_rows)
-    total_count = len(all_rows)
     
     # --------------------------------------------------------
     # 2. スマホ向けメール（Gmail等）の構築 (コピペ用カードレイアウト・添付なし)
@@ -378,10 +320,9 @@ def send_email(subject, body_markdown, csv_filename="B2B_Leads.csv"):
       <h1>医薬品 B2B 潜在顧客（リード）発掘レポート</h1>
       <div class="summary-box">
         <p>本日のB2Bリード抽出結果です。</p>
-        <p><strong>X(Twitter) API検証済 取得件数: {lead_count} 件</strong> / 抽出母数: {total_count} 件</p>
-        <p>※鍵アカウントや無効なIDは自動除外されています。</p>
+        <p><strong>取得件数: {lead_count} 件</strong></p>
         <p>詳細は添付のCSVファイル（<strong>{csv_filename}</strong>）を開いて、進捗管理シート等へコピー＆ペーストしてください。</p>
-        <p>※同僚の皆様あて（Gmail）には、スマホ用コピペレイアウトのメールを別途送信しています。</p>
+        <p>※同僚の皆様あて（Gmail）には、スマホ用の【公開リプライ用】コピペレイアウトのメールを別途送信しています。</p>
       </div>
       <hr>
       <h3>AIからの傾向サマリー</h3>
