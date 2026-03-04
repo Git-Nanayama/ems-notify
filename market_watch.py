@@ -203,6 +203,7 @@ Only output the table and a one-sentence intro in Japanese. Do NOT use simplifie
 def extract_rows_from_markdown(text):
     """
     Markdownテキストからテーブル構造を抽出し、アカウント列を持つ行のリストを返します。
+    また、各行の先頭に担当端末（端末01〜端末09）を順番に割り当てます。
     """
     lines = text.strip().split('\n')
     rows = []
@@ -215,13 +216,21 @@ def extract_rows_from_markdown(text):
                 if "アカウント" in cells[0] or "ID" in cells[0]:
                     continue
                 rows.append(cells)
-    return rows
+                
+    # 端末を割り当て (端末01〜端末09)
+    assigned_rows = []
+    for i, row in enumerate(rows):
+        device_id = f"端末{((i % 9) + 1):02d}"
+        assigned_rows.append([device_id] + row)
+        
+    return assigned_rows
 
 def generate_csv_from_rows(rows):
     """行データのリストからCSV形式の文字列を生成します"""
     if not rows:
         return ""
-    headers = ["アカウント名 (@ID)", "推定役職・属性", "国・地域", "リプライ対象のポスト(URL/内容)", "おすすめリプライ文面（原語）", "リプライ文面（日本語訳）"]
+    # 先頭に担当端末を追加
+    headers = ["担当端末", "アカウント名 (@ID)", "推定役職・属性", "国・地域", "リプライ対象のポスト(URL/内容)", "おすすめリプライ文面（原語）", "リプライ文面（日本語訳）"]
     output = io.StringIO()
     writer = csv.writer(output, lineterminator='\n')
     writer.writerow(headers)
@@ -244,28 +253,42 @@ def convert_markdown_to_html_summary(text):
     
     return "".join(html_output)
 
-def create_mobile_friendly_html(rows):
+def create_mobile_friendly_html(rows, target_email=None, email_to_device_map=None):
     """
     スマホのメールアプリでコピペしやすいように、
     テーブル行から「宛先」と「DMテキスト」のみを抽出し
     見やすいカード型レイアウトのHTMLブロックを生成する。
+    メールアドレスが指定されている場合は、その担当端末のデータのみを抽出する。
     """
     if not rows:
         return "<p style='color:red;'>⚠️ 今回の抽出データには、コピペ可能なDM案が含まれていませんでした。</p>"
 
+    # 担当端末の絞り込み
+    filtered_rows = rows
+    if target_email and email_to_device_map:
+        target_device = email_to_device_map.get(target_email)
+        if target_device:
+            filtered_rows = [row for row in rows if row[0] == target_device]
+            if not filtered_rows:
+                return f"<p>本日の {target_device} 担当分のリストはありません。</p>"
+
     html_output = []
-    for cells in rows:
-        if len(cells) < 5:
+    for cells in filtered_rows:
+        # 端末列が追加されたため、要素数は6以上
+        if len(cells) < 6:
             continue
-        account = cells[0]
-        dm_text = cells[4]
+            
+        device = cells[0]
+        account = cells[1]
+        post_url = cells[4]
+        reply_text = cells[5]
         
         card_html = f"""
         <div style="margin-bottom: 25px; padding: 15px; background-color: #f8fafc; border-left: 5px solid #0ea5e9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-            <p style="margin: 0 0 5px 0; font-size: 0.9em; font-weight: bold; color: #0284c7;">▼宛先アカウント (対象ポスト)</p>
-            <p style="margin: 0 0 15px 0; font-size: 1.1em; word-break: break-all;">{account}<br><span style="font-size: 0.8em; color: #64748b;">(タップして対象ポストを開く: {cells[3]})</span></p>
+            <p style="margin: 0 0 5px 0; font-size: 0.9em; font-weight: bold; color: #0284c7;">▼宛先アカウント (対象ポスト) [{device}担当]</p>
+            <p style="margin: 0 0 15px 0; font-size: 1.1em; word-break: break-all;">{account}<br><span style="font-size: 0.8em; color: #64748b;">(タップして対象ポストを開く: {post_url})</span></p>
             <p style="margin: 0 0 5px 0; font-size: 0.9em; font-weight: bold; color: #475569;">▼リプライ用メッセージ (長押しで全選択コピー)</p>
-            <p style="background-color: #ffffff; padding: 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: sans-serif; font-size: 1.05em; line-height: 1.5; margin: 0;">{dm_text}</p>
+            <p style="background-color: #ffffff; padding: 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: sans-serif; font-size: 1.05em; line-height: 1.5; margin: 0;">{reply_text}</p>
         </div>
         """
         html_output.append(card_html)
@@ -294,11 +317,17 @@ def send_email(subject, body_markdown, csv_filename="B2B_Leads.csv"):
     lead_count = len(valid_rows)
     
     # --------------------------------------------------------
-    # 2. スマホ向けメール（Gmail等）の構築 (コピペ用カードレイアウト・添付なし)
+    # 2. スマホ向けメール（Gmail等）の HTMLベース構築・送信準備
     # --------------------------------------------------------
     gmail_recipients_str = os.environ.get("GMAIL_RECIPIENTS", "")
     mobile_addresses = [addr.strip() for addr in gmail_recipients_str.split(',') if addr.strip()]
-    mobile_friendly_blocks = create_mobile_friendly_html(valid_rows)
+    
+    # 端末とメールアドレスのマッピング (仮)
+    # 環境変数のリスト順に端末01〜端末09を割り当てる想定
+    email_to_device_map = {}
+    for i, addr in enumerate(mobile_addresses):
+        if i < 9:
+            email_to_device_map[addr] = f"端末{i+1:02d}"
 
     # CSV生成
     csv_string = generate_csv_from_rows(valid_rows)
@@ -321,8 +350,9 @@ def send_email(subject, body_markdown, csv_filename="B2B_Leads.csv"):
       <div class="summary-box">
         <p>本日のB2Bリード抽出結果です。</p>
         <p><strong>取得件数: {lead_count} 件</strong></p>
+        <p>システム側で各リードに「端末01〜端末09」の担当を自動的に割り振りました。</p>
         <p>詳細は添付のCSVファイル（<strong>{csv_filename}</strong>）を開いて、進捗管理シート等へコピー＆ペーストしてください。</p>
-        <p>※同僚の皆様あて（Gmail）には、スマホ用の【公開リプライ用】コピペレイアウトのメールを別途送信しています。</p>
+        <p>※同僚の皆様あて（Gmail）には、各個人の「担当端末分のみ」を抽出したスマホ用メールを送信しています。</p>
       </div>
       <hr>
       <h3>AIからの傾向サマリー</h3>
@@ -348,39 +378,6 @@ def send_email(subject, body_markdown, csv_filename="B2B_Leads.csv"):
         msg_pc.attach(part)
 
     # --------------------------------------------------------
-    # 2. スマホ向けメール（Gmail等）の HTMLベース構築
-    # --------------------------------------------------------
-    mobile_html_content = ""
-    if mobile_addresses:
-        mobile_html_content = f"""
-        <html>
-        <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <style>
-          body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; margin: 10px; }}
-          h1 {{ color: #0078d4; border-bottom: 2px solid #0078d4; padding-bottom: 10px; font-size: 1.5em; }}
-          .summary-box {{ background-color: #f9f9f9; border-left: 4px solid #0078d4; padding: 15px; margin-bottom: 30px; border-radius: 0 4px 4px 0; }}
-          .footer {{ margin-top: 40px; font-size: 0.8em; color: #666; border-top: 1px solid #ccc; padding-top: 15px; text-align: center; }}
-        </style>
-        </head>
-        <body>
-          <h1>【B2Bリード】獲得レポート (全件表示)</h1>
-          <div class="summary-box">
-            <p style="margin-top:0;"><strong>取得リード数: {lead_count} 件</strong></p>
-            <p style="font-size: 0.9em; margin-bottom:0;">※各案件の詳細・ご自身が送信すべきリストの担当範囲は、担当役員からの割り振りに従ってください。</p>
-          </div>
-          <h3 style="color: #334155; margin-bottom: 15px;">▼スマホ用・DM送信コピペリスト</h3>
-          {mobile_friendly_blocks}
-          
-          <div class="footer">
-            このメールは B2B Lead Generation Bot によって自動送信されています。<br>
-            (github.com/Git-Nanayama/ems-notify)
-          </div>
-        </body>
-        </html>
-        """
-
-    # --------------------------------------------------------
     # 3. SMTPサーバー経由での送信
     # --------------------------------------------------------
     try:
@@ -394,12 +391,44 @@ def send_email(subject, body_markdown, csv_filename="B2B_Leads.csv"):
                 server.send_message(msg_pc, from_addr=smtp_user, to_addrs=pc_addresses)
                 print(f"✅ PC用メール送信完了 → {', '.join(pc_addresses)}")
             
-            # スマホ用メール送信（ループで各Gmailに「個別のメール」として1通ずつ送信）
-            if mobile_addresses and mobile_html_content:
+            # スマホ用メール送信（各担当者に合わせた内容で送信）
+            if mobile_addresses:
                 success_count = 0
                 for addr in mobile_addresses:
+                    # その人のためのHTMLブロックを生成
+                    mobile_blocks = create_mobile_friendly_html(valid_rows, target_email=addr, email_to_device_map=email_to_device_map)
+                    device_name = email_to_device_map.get(addr, "不明端末")
+                    
+                    mobile_html_content = f"""
+                    <html>
+                    <head>
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <style>
+                      body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; margin: 10px; }}
+                      h1 {{ color: #0078d4; border-bottom: 2px solid #0078d4; padding-bottom: 10px; font-size: 1.5em; }}
+                      .summary-box {{ background-color: #f9f9f9; border-left: 4px solid #0078d4; padding: 15px; margin-bottom: 30px; border-radius: 0 4px 4px 0; }}
+                      .footer {{ margin-top: 40px; font-size: 0.8em; color: #666; border-top: 1px solid #ccc; padding-top: 15px; text-align: center; }}
+                    </style>
+                    </head>
+                    <body>
+                      <h1>【B2Bリード】獲得レポート ({device_name} 担当分)</h1>
+                      <div class="summary-box">
+                        <p style="margin-top:0;"><strong>本日の全体取得リード数: {lead_count} 件</strong></p>
+                        <p style="font-size: 0.9em; margin-bottom:0;">※以下は自動振り分けされた、あなたの担当案件のみを表示しています。</p>
+                      </div>
+                      <h3 style="color: #334155; margin-bottom: 15px;">▼スマホ用・DM送信コピペリスト</h3>
+                      {mobile_blocks}
+                      
+                      <div class="footer">
+                        このメールは B2B Lead Generation Bot によって自動送信されています。<br>
+                        (github.com/Git-Nanayama/ems-notify)
+                      </div>
+                    </body>
+                    </html>
+                    """
+                    
                     msg_mobile = MIMEMultipart()
-                    msg_mobile["Subject"] = Header(subject + " [スマホ用コピペ版]", "utf-8")
+                    msg_mobile["Subject"] = Header(subject + f" [{device_name}担当分]", "utf-8")
                     msg_mobile["From"] = smtp_user
                     msg_mobile["To"] = addr
                     msg_mobile.attach(MIMEText(mobile_html_content, "html", "utf-8"))
@@ -410,7 +439,7 @@ def send_email(subject, body_markdown, csv_filename="B2B_Leads.csv"):
                     except Exception as e:
                         print(f"❌ スマホ用メール送信失敗 ({addr}): {e}")
                 
-                print(f"✅ スマホ用メール(個別1to1)送信完了 → {success_count}/{len(mobile_addresses)}件")
+                print(f"✅ スマホ用メール(個別1to1/端末割当済)送信完了 → {success_count}/{len(mobile_addresses)}件")
                 
     except Exception as e:
         print(f"❌ メール送信失敗: {e}")
