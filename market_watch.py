@@ -141,7 +141,7 @@ Focus explicitly on WHOLESALERS, IMPORTERS, and B2B DISTRIBUTORS. Look for keywo
     prompt_base = f"""Today is {date_str}. Your current focus group is {group_name}.
 
 You are an expert B2B Lead Generation Specialist. 
-YOUR TASK: Identify 15 high-value B2B targets on X (Twitter) in the following regions: {regions}.
+YOUR TASK: Identify up to 15 REAL, high-value B2B targets on X (Twitter) in the following regions: {regions}.
 
 === REGIONAL STRATEGY & CORE PRODUCTS ===
 {focus_points}
@@ -158,10 +158,12 @@ YOUR TASK: Identify 15 high-value B2B targets on X (Twitter) in the following re
 - Professionals explicitly interested in Japanese Pharmaceuticals ("Japanese quality", "authentic medicine").
 - Buyers actively seeking new suppliers ("looking for reliable supplier", "need wholesale source", "B2B partnership").
 
-**[CRITICAL: POST RELEVANCY RULES]**
-The target post you select for replying MUST be highly relevant to business, supply chains, medical trends, drug shortages, or clinic operations.
-DO NOT select trivial personal posts (e.g., "I ate lunch", "Good morning").
-If a user has no relevant business posts, DO NOT INCLUDE THEM in the list. Quality over quantity.
+**[CRITICAL: ANTI-HALLUCINATION & POST RELEVANCY RULES]**
+- You MUST use the x_search tool to find ACTUAL, REAL posts and REAL user handles.
+- DO NOT INVENT, GUESS, OR HALLUCINATE ANY user handles (@ID) or posts. If you cannot find real data, DO NOT make it up.
+- The target post you select for replying MUST be highly relevant to business, supply chains, medical trends, drug shortages, or clinic operations.
+- DO NOT select trivial personal posts (e.g., "I ate lunch", "Good morning").
+- If a user has no relevant business posts, DO NOT INCLUDE THEM in the list. Quality and realness over quantity.
 
 === SEARCH LANGUAGE INSTRUCTION ===
 You MUST construct your X (Twitter) search queries using the native languages of the target regions (e.g., Arabic for GCC, Turkish for Turkey, Traditional Chinese for Taiwan/HK, etc.) to find authentic local buyers, in addition to English. Use the specified languages for this group: {languages}.
@@ -176,7 +178,7 @@ Generate a MARKDOWN TABLE in JAPANESE (日本語) EXCEPT for the reply texts:
    - Example sequence: "Great insight on [topic]! At Asakusa Pharmacy (Japan), we're also seeing this trend. We might be able to support your clinic with our Japanese medical supplies. Would love to exchange insights via DM if you're open to it."
 - **おすすめリプライ文面（現地の言語）**: Translate the exact same English reply into the **Target's Native Language** (e.g., Arabic, Traditional Chinese, Turkish, etc., based on the region).
 
-Include EXACTLY 15 actionable leads. Handles are critical. 
+Include UP TO 15 actionable, VERIFIED REAL leads. Do NOT pad the list with fake data if you find fewer than 15. Handles are critical and MUST exist. 
 Only output the table and a one-sentence intro in Japanese. Do NOT use simplified Chinese in the output text."""
 
     print(f"  [SDK] {group_name} / {segment_name} のB2Bリード検索中（目標45件、最大5回ループ）...")
@@ -233,6 +235,9 @@ Only output the table and a one-sentence intro in Japanese. Do NOT use simplifie
 
         if total_valid_leads >= 45:
             print(f"  [SDK] 目標の45件に到達したため、ループを早期終了します。")
+            break
+        elif loop_valid_count == 0:
+            print(f"  [SDK] 今回のループで有効な新規リードが見つかりませんでした。無駄なAPI呼び出しを防ぐため、ループを終了します。")
             break
 
     # 全ループ分の文字列を結合。テーブルのヘッダーが重複するが、CSV変換処理で対応可能
