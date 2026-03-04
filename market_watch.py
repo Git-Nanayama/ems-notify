@@ -33,25 +33,7 @@ except ImportError:
 from xai_sdk import Client
 from xai_sdk.chat import user as user_msg
 from xai_sdk.tools import x_search, web_search
-import tweepy
 
-def fetch_real_post_url(client, handle):
-    """Tweepyを使用してユーザーの最新のオリジナルツイートのURLを取得する"""
-    handle = handle.strip().lstrip('@')
-    try:
-        user = client.get_user(username=handle)
-        if not user.data:
-            return None
-        user_id = user.data.id
-        
-        tweets = client.get_users_tweets(id=user_id, max_results=5, exclude=['retweets', 'replies'])
-        if tweets.data:
-            tweet_id = tweets.data[0].id
-            return f"https://x.com/{handle}/status/{tweet_id}"
-        return None
-    except Exception as e:
-        print(f"  [Tweepy Warning] Could not fetch data for @{handle}: {e}")
-        return None
 
 
 def find_b2b_leads():
@@ -170,9 +152,10 @@ You MUST construct your X (Twitter) search queries using the native languages of
 
 === OUTPUT FORMAT ===
 Generate a MARKDOWN TABLE in JAPANESE (日本語) EXCEPT for the reply texts:
-| アカウント名 (@ID) | 推定役職・属性 | 国・地域 | アカウント選定理由 | おすすめリプライ文面（英語） | おすすめリプライ文面（現地の言語） |
+| アカウント名 (@ID) | 推定役職・属性 | 国・地域 | 対象ポストURL | アカウント選定理由 | おすすめリプライ文面（英語） | おすすめリプライ文面（現地の言語） |
 
-- **アカウント選定理由**: Briefly explain WHY this valid business target was selected (e.g., "Complaining about drug shortages"). Do NOT attempt to write a URL here. URLs will be handled by the system later.
+- **対象ポストURL**: You MUST output the exact URL of the specific post you found using the x_search tool. (e.g. https://x.com/username/status/1234567890).
+- **アカウント選定理由**: Briefly explain WHY this valid business target was selected (e.g., "Complaining about drug shortages").
 - **おすすめリプライ文面（英語）**: Create a contextual, professional public reply (mention) to that specific post in **English**. 
    - DO NOT just say "We sell drugs, DM us". Instead, acknowledge their post contextualy.
    - Example sequence: "Great insight on [topic]! At Asakusa Pharmacy (Japan), we're also seeing this trend. We might be able to support your clinic with our Japanese medical supplies. Would love to exchange insights via DM if you're open to it."
@@ -249,54 +232,18 @@ Only output the table and a one-sentence intro in Japanese. Do NOT use simplifie
 def extract_rows_from_markdown(text):
     """
     Markdownテキストからテーブル構造を抽出し、アカウント列を持つ行のリストを返します。
-    Tweepyを使って実際のアカウントと最新ポストを確認し、正しいURLを差し込みます。
-    無効なアカウントは除外します。
     """
     lines = text.strip().split('\n')
-    raw_rows = []
+    valid_rows = []
     
     for line in lines:
         if '|' in line and '---' not in line:
             cells = [cell.strip() for cell in line.strip().strip('|').split('|')]
-            if len(cells) >= 5:
+            if len(cells) >= 6:
                 # 見出し行を除外
                 if "アカウント" in cells[0] or "ID" in cells[0]:
                     continue
-                raw_rows.append(cells)
-                
-    # Twitter Client の初期化
-    auth_client = None
-    if os.environ.get("X_API_KEY"):
-        auth_client = tweepy.Client(
-            consumer_key=os.environ.get("X_API_KEY"),
-            consumer_secret=os.environ.get("X_API_KEY_SECRET"),
-            access_token=os.environ.get("X_ACCESS_TOKEN"),
-            access_token_secret=os.environ.get("X_ACCESS_TOKEN_SECRET")
-        )
-
-    valid_rows = []
-    print(f"  [Validator] APIを利用してURLの検証と抽出を開始します（対象: {len(raw_rows)}件）...")
-    import re
-    for row in raw_rows:
-        handle_text = row[0]
-        match = re.search(r'@([A-Za-z0-9_]+)', handle_text)
-        if not match:
-            continue
-            
-        clean_handle = match.group(1)
-        
-        if auth_client:
-            real_url = fetch_real_post_url(auth_client, clean_handle)
-            if real_url:
-                row[3] = real_url
-                valid_rows.append(row)
-            else:
-                # 本物のポストが見つからなかった、またはエラーだった場合はスキップ
-                continue
-        else:
-            # APIキーがない場合はフォールバック
-            row[3] = f"https://x.com/{clean_handle}"
-            valid_rows.append(row)
+                valid_rows.append(cells)
                 
     # 端末を割り当て (端末01〜端末09)
     assigned_rows = []
@@ -311,7 +258,7 @@ def generate_csv_from_rows(rows):
     if not rows:
         return ""
     # 先頭に担当端末を追加
-    headers = ["担当端末", "アカウント名 (@ID)", "推定役職・属性", "国・地域", "リプライ対象のポスト(URL/内容)", "おすすめリプライ文面（英語）", "おすすめリプライ文面（現地の言語）"]
+    headers = ["担当端末", "アカウント名 (@ID)", "推定役職・属性", "国・地域", "対象ポストURL", "アカウント選定理由", "おすすめリプライ文面（英語）", "おすすめリプライ文面（現地の言語）"]
     output = io.StringIO()
     writer = csv.writer(output, lineterminator='\n')
     writer.writerow(headers)
@@ -355,14 +302,14 @@ def create_mobile_friendly_html(rows, target_email=None, email_to_device_map=Non
 
     html_output = []
     for cells in filtered_rows:
-        # 端末列が追加されたため、要素数は6以上
-        if len(cells) < 6:
+        # 新しいフォーマット: 0:端末, 1:アカウント, 2:役職, 3:国, 4:URL, 5:理由, 6:英リプライ, 7:現地語リプライ (len>=8)
+        if len(cells) < 8:
             continue
             
         device = cells[0]
         account = cells[1]
         post_url = cells[4]
-        reply_text = cells[5]
+        reply_text = cells[7] # スマホでは現地語のリプライを送る想定
         
         card_html = f"""
         <div style="margin-bottom: 25px; padding: 15px; background-color: #f8fafc; border-left: 5px solid #0ea5e9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
