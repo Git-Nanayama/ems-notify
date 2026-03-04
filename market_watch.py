@@ -149,9 +149,9 @@ You MUST construct your X (Twitter) search queries using the native languages of
 
 === OUTPUT FORMAT ===
 Generate a MARKDOWN TABLE in JAPANESE (日本語) EXCEPT for the reply texts:
-| アカウント名 (@ID) | 推定役職・属性 | 国・地域 | リプライ対象のポスト(URLまたは内容要約) | おすすめリプライ文面（英語） | おすすめリプライ文面（現地の言語） |
+| アカウント名 (@ID) | 推定役職・属性 | 国・地域 | リプライ対象のポスト(必ずURLを記載) | おすすめリプライ文面（英語） | おすすめリプライ文面（現地の言語） |
 
-- **リプライ対象のポスト**: Find a recent, highly relevant post (tweet) from this user discussing business, industry trends, shortages, or related topics. Provide the URL or a short summary.
+- **リプライ対象のポスト**: Find a recent, highly relevant post (tweet) from this user discussing business, industry trends, shortages, or related topics. You **MUST** provide the exact URL of this post (e.g., https://x.com/username/status/123...). A summary without a URL is unacceptable.
 - **おすすめリプライ文面（英語）**: Create a contextual, professional public reply (mention) to that specific post in **English**. 
    - DO NOT just say "We sell drugs, DM us". Instead, acknowledge their post contextualy.
    - Example sequence: "Great insight on [topic]! At Asakusa Pharmacy (Japan), we're also seeing this trend. We might be able to support your clinic with our Japanese medical supplies. Would love to exchange insights via DM if you're open to it."
