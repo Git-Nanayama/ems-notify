@@ -224,12 +224,8 @@ def extract_rows_from_markdown(text):
                 
     # 端末を割り当て (端末01〜端末09)
     assigned_rows = []
-    import math
-    chunk_size = math.ceil(len(rows) / 9) if len(rows) > 0 else 1
-    
     for i, row in enumerate(rows):
-        device_num = min((i // chunk_size) + 1, 9)
-        device_id = f"端末{device_num:02d}"
+        device_id = f"端末{((i % 9) + 1):02d}"
         assigned_rows.append([device_id] + row)
         
     return assigned_rows
