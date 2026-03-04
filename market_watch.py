@@ -154,7 +154,7 @@ Generate a MARKDOWN TABLE in JAPANESE (日本語) EXCEPT for the reply texts:
 - **リプライ対象のポスト**: Find a recent, highly relevant post (tweet) from this user discussing business, industry trends, shortages, or related topics. Provide the URL or a short summary.
 - **おすすめリプライ文面（英語）**: Create a contextual, professional public reply (mention) to that specific post in **English**. 
    - DO NOT just say "We sell drugs, DM us". Instead, acknowledge their post contextualy.
-   - Example sequence: "Great insight on [topic]! At Kyomirai (Japan), we're also seeing this trend. We might be able to support your clinic with our Japanese medical supplies. Would love to exchange insights via DM if you're open to it."
+   - Example sequence: "Great insight on [topic]! At Asakusa Pharmacy (Japan), we're also seeing this trend. We might be able to support your clinic with our Japanese medical supplies. Would love to exchange insights via DM if you're open to it."
 - **おすすめリプライ文面（現地の言語）**: Translate the exact same English reply into the **Target's Native Language** (e.g., Arabic, Traditional Chinese, Turkish, etc., based on the region).
 
 Include EXACTLY 15 actionable leads. Handles are critical. 
