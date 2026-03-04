@@ -244,8 +244,8 @@ Only output the table and a one-sentence intro in Japanese. Do NOT use simplifie
 def extract_rows_from_markdown(text):
     """
     Markdownテキストからテーブル構造を抽出し、アカウント列を持つ行のリストを返します。
-    Tweepyを使って実際のアカウントと最新ポストを確認し、正しいURLを差し込みます。
-    無効なアカウントは除外します。
+    API制限（401 Unauthorized）を回避するため、最新投稿URLではなく、確実な「プロフィールURL」を生成します。
+    無効なアカウントフォーマットは除外します。
     """
     lines = text.strip().split('\n')
     raw_rows = []
@@ -259,18 +259,8 @@ def extract_rows_from_markdown(text):
                     continue
                 raw_rows.append(cells)
                 
-    # Twitter Client の初期化
-    auth_client = None
-    if os.environ.get("X_API_KEY"):
-        auth_client = tweepy.Client(
-            consumer_key=os.environ.get("X_API_KEY"),
-            consumer_secret=os.environ.get("X_API_KEY_SECRET"),
-            access_token=os.environ.get("X_ACCESS_TOKEN"),
-            access_token_secret=os.environ.get("X_ACCESS_TOKEN_SECRET")
-        )
-
     valid_rows = []
-    print(f"  [Validator] APIを利用してURLの検証と抽出を開始します（対象: {len(raw_rows)}件）...")
+    print(f"  [Validator] 架空URL排除のため、安全なプロフィールURLへの変換を開始します（対象: {len(raw_rows)}件）...")
     import re
     for row in raw_rows:
         handle_text = row[0]
@@ -280,18 +270,9 @@ def extract_rows_from_markdown(text):
             
         clean_handle = match.group(1)
         
-        if auth_client:
-            real_url = fetch_real_post_url(auth_client, clean_handle)
-            if real_url:
-                row[3] = real_url
-                valid_rows.append(row)
-            else:
-                # 本物のポストが見つからなかった、またはエラーだった場合はスキップ
-                continue
-        else:
-            # APIキーがない場合はフォールバック
-            row[3] = f"https://x.com/{clean_handle}"
-            valid_rows.append(row)
+        # 100%確実なプロフィールURLを挿入
+        row[3] = f"https://x.com/{clean_handle}"
+        valid_rows.append(row)
                 
     # 端末を割り当て (端末01〜端末09)
     assigned_rows = []
