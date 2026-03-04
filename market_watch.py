@@ -160,13 +160,15 @@ Generate a MARKDOWN TABLE in JAPANESE (日本語) EXCEPT for the reply texts:
 Include EXACTLY 15 actionable leads. Handles are critical. 
 Only output the table and a one-sentence intro in Japanese. Do NOT use simplified Chinese in the output text."""
 
-    print(f"  [SDK] {group_name} / {segment_name} のB2Bリード検索中（目標45件、3回ループ）...")
+    print(f"  [SDK] {group_name} / {segment_name} のB2Bリード検索中（目標45件、最大5回ループ）...")
 
     all_responses = []
     found_handles = set()
+    total_valid_leads = 0
+    max_loops = 5
 
-    for i in range(3):
-        print(f"  [SDK] ループ {i+1}/3 実行中...")
+    for i in range(max_loops):
+        print(f"  [SDK] ループ {i+1}/{max_loops} 実行中... (現在 {total_valid_leads}件 / 目標 45件)")
         
         # 過去に見つけたアカウントを除外する指示を追加
         exclusion_instruction = ""
@@ -197,9 +199,24 @@ Only output the table and a one-sentence intro in Japanese. Do NOT use simplifie
         import re
         handles = re.findall(r'(@[A-Za-z0-9_]+)', full_response)
         found_handles.update(handles)
-        print(f"  [SDK] 累計獲得アカウント数（概算）: {len(found_handles)}")
+        
+        # 厳密な抽出件数をカウント
+        lines = full_response.strip().split('\n')
+        loop_valid_count = 0
+        for line in lines:
+            if '|' in line and '---' not in line:
+                cells = [cell.strip() for cell in line.strip().strip('|').split('|')]
+                if len(cells) >= 5 and "アカウント" not in cells[0] and "ID" not in cells[0]:
+                    loop_valid_count += 1
+                    total_valid_leads += 1
+                    
+        print(f"  [SDK] 今回のループでの獲得件数: {loop_valid_count} (累計: {total_valid_leads})")
 
-    # 3回分の文字列を結合。テーブルのヘッダーが重複するが、CSV変換処理で対応可能
+        if total_valid_leads >= 45:
+            print(f"  [SDK] 目標の45件に到達したため、ループを早期終了します。")
+            break
+
+    # 全ループ分の文字列を結合。テーブルのヘッダーが重複するが、CSV変換処理で対応可能
     combined_response = "\n\n".join(all_responses)
 
     return combined_response, segment_name
