@@ -366,9 +366,8 @@ def send_email(subject, body_markdown, csv_filename="B2B_Leads.csv"):
         <body>
           <h1>【B2Bリード】獲得レポート (全件表示)</h1>
           <div class="summary-box">
-            <p style="margin-top:0;"><strong>検証済リード数: {lead_count} 件</strong> (抽出: {total_count}件)</p>
-            <p style="font-size: 0.9em; margin-bottom:0;">※鍵アカウントや無効なIDは自動で除外されています。</p>
-            <p style="font-size: 0.9em; margin-bottom:0;">※各案件の詳細・課題は、管理用メール（Outlook）のCSVファイルから確認してください。</p>
+            <p style="margin-top:0;"><strong>取得リード数: {lead_count} 件</strong></p>
+            <p style="font-size: 0.9em; margin-bottom:0;">※各案件の詳細・ご自身が送信すべきリストの担当範囲は、担当役員からの割り振りに従ってください。</p>
           </div>
           <h3 style="color: #334155; margin-bottom: 15px;">▼スマホ用・DM送信コピペリスト</h3>
           {mobile_friendly_blocks}
