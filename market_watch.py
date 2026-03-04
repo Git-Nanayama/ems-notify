@@ -129,7 +129,7 @@ YOUR TASK: Identify 15 high-value B2B targets on X (Twitter) in the following re
 
 {segment_instruction}
 
-=== TARGETING B2B INTENT (NOT B2C) ===
+=== TARGETING B2B INTENT (NOT B2C) & HIGH RELEVANCY ===
 ❌ NO standalone drug names (prevents patient spam).
 ❌ EXCLUDE large general hospital directors (they usually do not buy directly from new foreign agents), medical media/news accounts, and journalists.
 ❌ EXCLUDE Japan (Do NOT include any targets based in Japan or Japanese individuals).
@@ -139,18 +139,23 @@ YOUR TASK: Identify 15 high-value B2B targets on X (Twitter) in the following re
 - Professionals explicitly interested in Japanese Pharmaceuticals ("Japanese quality", "authentic medicine").
 - Buyers actively seeking new suppliers ("looking for reliable supplier", "need wholesale source", "B2B partnership").
 
+**[CRITICAL: POST RELEVANCY RULES]**
+The target post you select for replying MUST be highly relevant to business, supply chains, medical trends, drug shortages, or clinic operations.
+DO NOT select trivial personal posts (e.g., "I ate lunch", "Good morning").
+If a user has no relevant business posts, DO NOT INCLUDE THEM in the list. Quality over quantity.
+
 === SEARCH LANGUAGE INSTRUCTION ===
 You MUST construct your X (Twitter) search queries using the native languages of the target regions (e.g., Arabic for GCC, Turkish for Turkey, Traditional Chinese for Taiwan/HK, etc.) to find authentic local buyers, in addition to English. Use the specified languages for this group: {languages}.
 
 === OUTPUT FORMAT ===
-Generate a MARKDOWN TABLE in JAPANESE (日本語):
-| アカウント名 (@ID) | 推定役職・属性 | 国・地域 | リプライ対象のポスト(URLまたは内容要約) | おすすめリプライ文面（原語） | リプライ文面（日本語訳） |
+Generate a MARKDOWN TABLE in JAPANESE (日本語) EXCEPT for the reply texts:
+| アカウント名 (@ID) | 推定役職・属性 | 国・地域 | リプライ対象のポスト(URLまたは内容要約) | おすすめリプライ文面（英語） | おすすめリプライ文面（現地の言語） |
 
-- **リプライ対象のポスト**: Find a recent, specific post (tweet) from this user discussing business, industry trends, shortages, or related topics. Provide the URL or a short summary.
-- **おすすめリプライ文面（原語）**: Create a contextual, professional public reply (mention) to that specific post. 
+- **リプライ対象のポスト**: Find a recent, highly relevant post (tweet) from this user discussing business, industry trends, shortages, or related topics. Provide the URL or a short summary.
+- **おすすめリプライ文面（英語）**: Create a contextual, professional public reply (mention) to that specific post in **English**. 
    - DO NOT just say "We sell drugs, DM us". Instead, acknowledge their post contextualy.
    - Example sequence: "Great insight on [topic]! At Kyomirai (Japan), we're also seeing this trend. We might be able to support your clinic with our Japanese medical supplies. Would love to exchange insights via DM if you're open to it."
-- **リプライ文面（日本語訳）**: Provide a Japanese translation of the reply.
+- **おすすめリプライ文面（現地の言語）**: Translate the exact same English reply into the **Target's Native Language** (e.g., Arabic, Traditional Chinese, Turkish, etc., based on the region).
 
 Include EXACTLY 15 actionable leads. Handles are critical. 
 Only output the table and a one-sentence intro in Japanese. Do NOT use simplified Chinese in the output text."""
@@ -230,7 +235,7 @@ def generate_csv_from_rows(rows):
     if not rows:
         return ""
     # 先頭に担当端末を追加
-    headers = ["担当端末", "アカウント名 (@ID)", "推定役職・属性", "国・地域", "リプライ対象のポスト(URL/内容)", "おすすめリプライ文面（原語）", "リプライ文面（日本語訳）"]
+    headers = ["担当端末", "アカウント名 (@ID)", "推定役職・属性", "国・地域", "リプライ対象のポスト(URL/内容)", "おすすめリプライ文面（英語）", "おすすめリプライ文面（現地の言語）"]
     output = io.StringIO()
     writer = csv.writer(output, lineterminator='\n')
     writer.writerow(headers)
