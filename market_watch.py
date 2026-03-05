@@ -260,15 +260,24 @@ def generate_csv_from_rows(rows):
 def convert_markdown_to_html_summary(text):
     """
     PC向けメール本文を簡略化するため、Markdownテーブル部分（|を含む行）を除外したサマリーのみをHTML化する。
+    また、AI特有の不要な前置き（「以下の地域で〜」「〜表にまとめました」など）も除外する。
     """
     lines = text.strip().split('\n')
     html_output = []
+    
+    # 除外キーワード（AIのよくある前置きテキスト）
+    ignore_keywords = ["以下", "特定しました", "発見", "検索", "まとめました", "空です", "見つかりません", "リストは", "重複排除"]
     
     for line in lines:
         if '|' in line:
             continue
         if line.strip() == '':
             continue
+            
+        # AIの前置きテキストを除外
+        if any(keyword in line for keyword in ignore_keywords):
+            continue
+            
         html_output.append(f"<p>{line}</p>")
     
     return "".join(html_output)
