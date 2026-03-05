@@ -48,49 +48,39 @@ def find_b2b_leads():
     date_str = today.strftime("%Y-%m-%d")
     weekday = today.weekday()  # 0:Mon, 1:Tue, ..., 6:Sun
 
-    # 曜日別ターゲットグループの定義 (地域主キー × Rank A商材)
+    # 全世界共通の広範囲検索設定
+    regions = "Global (Worldwide, with emphasis on Middle East, Europe, GCC, and Asia)"
+    languages = "English, Arabic, German, French, Turkish, Traditional Chinese, Thai, Vietnamese"
+
+    # 曜日別のテーマ（商材）ローテーション
     if weekday == 0:  # 月曜
-        group_name = "Group A: GCC (UAE & Saudi Arabia)"
-        regions = "UAE, Saudi Arabia, Kuwait, Qatar"
+        group_name = "Theme: High-Net-Worth GLP-1 Focus"
         focus_points = """- Core Product (Rank A): GLP-1 (Mounjaro/Ozempic/Wegovy) and AGA treatments.
 - Intent: Search for high-net-worth clinics experiencing severe GLP-1 shortages."""
-        languages = "Arabic, English"
     elif weekday == 1:  # 火曜
-        group_name = "Group B: East Asia (Taiwan, Hong Kong, Singapore)"
-        regions = "Taiwan, Hong Kong, Singapore"
+        group_name = "Theme: Authentic J-GMP Pharmaceuticals"
         focus_points = """- Core Product (Rank A): AGA treatments and GLP-1. (Rank B: Sleep medications like Dayvigo).
 - Intent: Aesthetic clinics seeking authentic 'J-GMP' (Japanese quality) pharmaceuticals."""
-        languages = "English, Traditional Chinese, Simplified Chinese"
     elif weekday == 2:  # 水曜
-        group_name = "Group C: UK & Europe"
-        regions = "United Kingdom, Germany, France"
+        group_name = "Theme: European/Global GLP-1 Shortage Focus"
         focus_points = """- Core Product (Rank A): GLP-1 (Mounjaro/Wegovy).
 - Intent: Private clinics and pharmacies desperately looking for stable GLP-1 supply due to national shortages."""
-        languages = "English, German, French"
     elif weekday == 3:  # 木曜
-        group_name = "Group D: Turkey"
-        regions = "Turkey"
+        group_name = "Theme: Global Hair Transplant/AGA Hubs"
         focus_points = """- Core Product (Rank A): AGA treatments (Finasteride/Dutasteride).
-- Intent: Global hair transplant hub. Target hair transplant clinics, lab-owners, and medical tourism facilitators."""
-        languages = "English, Turkish"
+- Intent: Target hair transplant clinics, lab-owners, and medical tourism facilitators searching for authentic medication."""
     elif weekday == 4:  # 金曜
-        group_name = "Group E: Africa & CIS"
-        regions = "Nigeria, South Africa, Central Asia"
+        group_name = "Theme: Africa & CIS / Emerging Markets Focus"
         focus_points = """- Core Product (Rank A): GLP-1 and AGA. (Rank B: Authentic lifestyle disease meds).
 - Intent: High-net-worth hospitals and importers avoiding fake drugs, seeking '100% Authentic Japanese' supply."""
-        languages = "English"
     elif weekday == 5:  # 土曜
-        group_name = "Group F: Southeast Asia"
-        regions = "Thailand, Vietnam, Philippines, Indonesia"
+        group_name = "Theme: Aesthetic Clinics & Gout Treatments"
         focus_points = """- Core Product (Rank A): GLP-1 and AGA. (Rank B: Gout treatments like Febuxostat).
-- Intent: Target aesthetic clinics (Thailand/Vietnam) and distributors seeking gout treatments (Philippines/Indonesia)."""
-        languages = "English, Thai, Vietnamese"
+- Intent: Target aesthetic clinics and distributors seeking gout treatments."""
     else:  # 日曜
-        group_name = "Group G: Global Sweep"
-        regions = "Global (Worldwide)"
+        group_name = "Theme: Global Sweep (All Core Products)"
         focus_points = """- Core Product (Rank A): GLP-1 and AGA.
 - Intent: Find any remaining high-value doctors, clinics, or wholesalers globally complaining about drug shortages."""
-        languages = "English"
 
     # 現在時刻(UTC)から時間帯を判定し、検索クエリ（注目ポイント）を分散させる
     # 設定スケジュール: UTC 21(JST 6), UTC 1(JST 10), UTC 4(JST 13)
