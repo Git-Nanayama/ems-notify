@@ -161,7 +161,7 @@ Generate a MARKDOWN TABLE in JAPANESE (日本語) EXCEPT for the reply texts:
    - Example sequence: "Great insight on [topic]! At Asakusa Pharmacy (Japan), we're also seeing this trend. We might be able to support your clinic with our Japanese medical supplies. Would love to exchange insights via DM if you're open to it."
 - **おすすめリプライ文面（現地の言語）**: Translate the exact same English reply into the **Target's Native Language** (e.g., Arabic, Traditional Chinese, Turkish, etc., based on the region).
 
-Include UP TO 15 actionable, VERIFIED REAL leads. Do NOT pad the list with fake data if you find fewer than 15. Handles are critical and MUST exist. 
+Include UP TO 15 actionable, VERIFIED REAL leads. AIM FOR 15 carefully curated leads but do NOT pad the list with fake data if you find fewer. Handles are critical and MUST exist. 
 Only output the table and a one-sentence intro in Japanese. Do NOT use simplified Chinese in the output text."""
 
     print(f"  [SDK] {group_name} / {segment_name} のB2Bリード検索中（目標45件、最大5回ループ）...")
@@ -174,12 +174,21 @@ Only output the table and a one-sentence intro in Japanese. Do NOT use simplifie
     for i in range(max_loops):
         print(f"  [SDK] ループ {i+1}/{max_loops} 実行中... (現在 {total_valid_leads}件 / 目標 45件)")
         
-        # 過去に見つけたアカウントを除外する指示を追加
+        # ループごとの戦略変更と過去に見つけたアカウントの除外指示
+        loop_strategy = ""
+        if i > 0:
+            loop_strategy = f"""
+=== LOOP STRATEGY ({i+1}/{max_loops}) ===
+WARNING: You are in loop {i+1}. Your previous search strategies did not yield enough results.
+You MUST change your search keywords, use different synonyms, or explicitly search in a different language from the allowed list ({languages}) to find new targets. 
+Consider loosening your keyword strictness slightly while maintaining B2B relevancy.
+"""
+
         exclusion_instruction = ""
         if found_handles:
             exclusion_instruction = f"\n\n=== EXCLUSION LIST ===\nDO NOT include the following accounts as they have already been found:\n{', '.join(found_handles)}\n"
 
-        current_prompt = prompt_base + exclusion_instruction
+        current_prompt = prompt_base + loop_strategy + exclusion_instruction
 
         client = Client(api_key=api_key)
         chat = client.chat.create(
@@ -220,8 +229,7 @@ Only output the table and a one-sentence intro in Japanese. Do NOT use simplifie
             print(f"  [SDK] 目標の45件に到達したため、ループを早期終了します。")
             break
         elif loop_valid_count == 0:
-            print(f"  [SDK] 今回のループで有効な新規リードが見つかりませんでした。無駄なAPI呼び出しを防ぐため、ループを終了します。")
-            break
+            print(f"  [SDK] 今回のループで有効な新規リードが見つかりませんでした。次のループで検索キーワード・戦略を変更して再試行します。")
 
     # 全ループ分の文字列を結合。テーブルのヘッダーが重複するが、CSV変換処理で対応可能
     combined_response = "\n\n".join(all_responses)
