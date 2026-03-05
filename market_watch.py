@@ -154,24 +154,28 @@ Generate a MARKDOWN TABLE in JAPANESE (日本語) EXCEPT for the reply texts:
 Include UP TO 15 actionable, VERIFIED REAL leads. AIM FOR 15 carefully curated leads but do NOT pad the list with fake data if you find fewer. Handles are critical and MUST exist. 
 Only output the table and a one-sentence intro in Japanese. Do NOT use simplified Chinese in the output text."""
 
-    print(f"  [SDK] {group_name} / {segment_name} のB2Bリード検索中（目標100件、最大12回ループ）...")
+    print(f"  [SDK] {group_name} / {segment_name} のB2Bリード検索中（目標50件、最大30回ループ）...")
 
     all_responses = []
     found_handles = set()
     total_valid_leads = 0
-    max_loops = 12
+    max_loops = 30
 
     for i in range(max_loops):
-        print(f"  [SDK] ループ {i+1}/{max_loops} 実行中... (現在 {total_valid_leads}件 / 目標 100件)")
+        print(f"  [SDK] ループ {i+1}/{max_loops} 実行中... (現在 {total_valid_leads}件 / 目標 50件)")
         
         # ループごとの戦略変更と過去に見つけたアカウントの除外指示
         loop_strategy = ""
         if i > 0:
+            broaden_hint = ""
+            if i >= 15:
+                broaden_hint = "\nCRITICAL: You are deep into the search. BROADEN your keywords significantly. Instead of just 'shortage', search for general terms like 'clinic owner', 'dermatologist', 'aesthetic doctor', 'pharmacy director', 'medical importer' in various languages to catch anything you missed."
+
             loop_strategy = f"""
 === LOOP STRATEGY ({i+1}/{max_loops}) ===
 WARNING: You are in loop {i+1}. You need to find MORE unique B2B leads.
 You MUST radically change your search keywords, use different synonyms, or explicitly search in different languages from the allowed list ({languages}) or different global regions to find targets you haven't seen yet.
-Do not repeat previous searches. Look for adjacent niches or less obvious B2B buyers.
+Do not repeat previous searches. Look for adjacent niches or less obvious B2B buyers.{broaden_hint}
 """
 
         exclusion_instruction = ""
@@ -209,8 +213,8 @@ Do not repeat previous searches. Look for adjacent niches or less obvious B2B bu
         print(f"  [SDK] 今回のループでの獲得件数: {loop_valid_count} (累計: {total_valid_leads})")
         
         # 目標件数によるループ終了判定
-        if total_valid_leads >= 100:
-            print(f"  [SDK] 目標の100件に到達したため、早期終了します。")
+        if total_valid_leads >= 50:
+            print(f"  [SDK] 目標の50件に到達したため、早期終了します。")
             break
         elif loop_valid_count == 0:
             print(f"  [SDK] 今回のループで有効な新規リードが見つかりませんでした。次のループで検索キーワード・戦略を変更して再試行します。")
