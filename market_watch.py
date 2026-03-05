@@ -154,24 +154,24 @@ Generate a MARKDOWN TABLE in JAPANESE (日本語) EXCEPT for the reply texts:
 Include UP TO 15 actionable, VERIFIED REAL leads. AIM FOR 15 carefully curated leads but do NOT pad the list with fake data if you find fewer. Handles are critical and MUST exist. 
 Only output the table and a one-sentence intro in Japanese. Do NOT use simplified Chinese in the output text."""
 
-    print(f"  [SDK] {group_name} / {segment_name} のB2Bリード検索中（目標45件、最大5回ループ）...")
+    print(f"  [SDK] {group_name} / {segment_name} のB2Bリード検索中（目標100件、最大12回ループ）...")
 
     all_responses = []
     found_handles = set()
     total_valid_leads = 0
-    max_loops = 5
+    max_loops = 12
 
     for i in range(max_loops):
-        print(f"  [SDK] ループ {i+1}/{max_loops} 実行中... (現在 {total_valid_leads}件 / 目標 45件)")
+        print(f"  [SDK] ループ {i+1}/{max_loops} 実行中... (現在 {total_valid_leads}件 / 目標 100件)")
         
         # ループごとの戦略変更と過去に見つけたアカウントの除外指示
         loop_strategy = ""
         if i > 0:
             loop_strategy = f"""
 === LOOP STRATEGY ({i+1}/{max_loops}) ===
-WARNING: You are in loop {i+1}. Your previous search strategies did not yield enough results.
-You MUST change your search keywords, use different synonyms, or explicitly search in a different language from the allowed list ({languages}) to find new targets. 
-Consider loosening your keyword strictness slightly while maintaining B2B relevancy.
+WARNING: You are in loop {i+1}. You need to find MORE unique B2B leads.
+You MUST radically change your search keywords, use different synonyms, or explicitly search in different languages from the allowed list ({languages}) or different global regions to find targets you haven't seen yet.
+Do not repeat previous searches. Look for adjacent niches or less obvious B2B buyers.
 """
 
         exclusion_instruction = ""
@@ -203,20 +203,14 @@ Consider loosening your keyword strictness slightly while maintaining B2B releva
         handles = re.findall(r'(@[A-Za-z0-9_]+)', full_response)
         found_handles.update(handles)
         
-        # 厳密な抽出件数をカウント
-        lines = full_response.strip().split('\n')
-        loop_valid_count = 0
-        for line in lines:
-            if '|' in line and '---' not in line:
-                cells = [cell.strip() for cell in line.strip().strip('|').split('|')]
-                if len(cells) >= 5 and "アカウント" not in cells[0] and "ID" not in cells[0]:
-                    loop_valid_count += 1
-                    total_valid_leads += 1
-                    
+        # 抽出した件数を集計（URLが含まれる行を有効なリードとみなす）
+        loop_valid_count = sum(1 for line in full_response.split('\n') if '|' in line and 'http' in line)
+        total_valid_leads += loop_valid_count
         print(f"  [SDK] 今回のループでの獲得件数: {loop_valid_count} (累計: {total_valid_leads})")
-
-        if total_valid_leads >= 45:
-            print(f"  [SDK] 目標の45件に到達したため、ループを早期終了します。")
+        
+        # 目標件数によるループ終了判定
+        if total_valid_leads >= 100:
+            print(f"  [SDK] 目標の100件に到達したため、早期終了します。")
             break
         elif loop_valid_count == 0:
             print(f"  [SDK] 今回のループで有効な新規リードが見つかりませんでした。次のループで検索キーワード・戦略を変更して再試行します。")
