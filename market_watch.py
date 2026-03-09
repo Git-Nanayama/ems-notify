@@ -142,7 +142,7 @@ You MUST construct your X (Twitter) search queries using the native languages of
 
 === OUTPUT FORMAT ===
 Generate a MARKDOWN TABLE in JAPANESE (日本語) EXCEPT for the reply texts:
-| アカウント名 (@ID) | 推定役職・属性 | 国・地域 | 対象ポストURL | アカウント選定理由 | おすすめリプライ文面（英語） | おすすめリプライ文面（現地の言語） |
+| アカウント名 (@ID) | 推定役職・属性 | 国・地域 | 対象ポストURL | アカウント選定理由 | おすすめリプライ文面（英語） | おすすめリプライ文面（現地の言語） | スパム対策版（超短縮・現地語） |
 
 - **対象ポストURL**: You MUST output the exact URL of the specific post you found using the x_search tool. (e.g. https://x.com/username/status/1234567890).
 - **アカウント選定理由**: Briefly explain WHY this valid business target was selected (e.g., "Complaining about drug shortages").
@@ -150,6 +150,7 @@ Generate a MARKDOWN TABLE in JAPANESE (日本語) EXCEPT for the reply texts:
    - DO NOT just say "We sell drugs, DM us". Instead, acknowledge their post contextualy.
    - Example sequence: "Great insight on [topic]! At Asakusa Pharmacy (Japan), we're also seeing this trend. We might be able to support your clinic with our Japanese medical supplies. Would love to exchange insights via DM if you're open to it."
 - **おすすめリプライ文面（現地の言語）**: Translate the exact same English reply into the **Target's Native Language** (e.g., Arabic, Traditional Chinese, Turkish, etc., based on the region).
+- **スパム対策版（超短縮・現地語）**: Create an extremely short and casual version of the Native Language reply (under 80 characters) to avoid SPAM filters. Keep it very brief like "Interesting! We send J-GMP medical supplies from Japan. DM me?"
 
 Include UP TO 15 actionable, VERIFIED REAL leads. AIM FOR 15 carefully curated leads but do NOT pad the list with fake data if you find fewer. Handles are critical and MUST exist. 
 Only output the table and a one-sentence intro in Japanese. Do NOT use simplified Chinese in the output text."""
@@ -254,7 +255,7 @@ def generate_csv_from_rows(rows):
     if not rows:
         return ""
     # 先頭に担当端末を追加
-    headers = ["担当端末", "アカウント名 (@ID)", "推定役職・属性", "国・地域", "対象ポストURL", "アカウント選定理由", "おすすめリプライ文面（英語）", "おすすめリプライ文面（現地の言語）"]
+    headers = ["担当端末", "アカウント名 (@ID)", "推定役職・属性", "国・地域", "対象ポストURL", "アカウント選定理由", "おすすめリプライ文面（英語）", "おすすめリプライ文面（現地の言語）", "スパム対策版（超短縮・現地語）"]
     output = io.StringIO()
     writer = csv.writer(output, lineterminator='\n')
     writer.writerow(headers)
@@ -307,7 +308,7 @@ def create_mobile_friendly_html(rows, target_email=None, email_to_device_map=Non
 
     html_output = []
     for cells in filtered_rows:
-        # 新しいフォーマット: 0:端末, 1:アカウント, 2:役職, 3:国, 4:URL, 5:理由, 6:英リプライ, 7:現地語リプライ (len>=8)
+        # 新しいフォーマット: 0:端末, 1:アカウント, 2:役職, 3:国, 4:URL, 5:理由, 6:英リプライ, 7:現地語リプライ, 8:超短縮版 (len>=9)
         if len(cells) < 8:
             continue
             
@@ -316,6 +317,10 @@ def create_mobile_friendly_html(rows, target_email=None, email_to_device_map=Non
         post_url = cells[4]
         reply_text = cells[7] # スマホでは現地語のリプライを送る想定
         
+        # 端末04と端末08のみ、SPAM認定リスク回避のため「超短縮版」を採用する
+        if device in ["端末04", "端末08"] and len(cells) >= 9:
+            reply_text = cells[8]
+
         card_html = f"""
         <div style="margin-bottom: 25px; padding: 15px; background-color: #f8fafc; border-left: 5px solid #0ea5e9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
             <p style="margin: 0 0 5px 0; font-size: 0.9em; font-weight: bold; color: #0284c7;">▼宛先アカウント (対象ポスト) [{device}担当]</p>
