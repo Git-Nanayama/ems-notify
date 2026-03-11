@@ -113,7 +113,7 @@ Focus explicitly on WHOLESALERS, IMPORTERS, and B2B DISTRIBUTORS. Look for keywo
     prompt_base = f"""Today is {date_str}. Your current focus group is {group_name}.
 
 You are an expert B2B Lead Generation Specialist. 
-YOUR TASK: Identify up to 15 REAL, high-value B2B targets on X (Twitter) in the following regions: {regions}.
+YOUR TASK: Identify up to 25 REAL, high-value B2B targets on X (Twitter) in the following regions: {regions}.
 
 === REGIONAL STRATEGY & CORE PRODUCTS ===
 {focus_points}
@@ -151,9 +151,9 @@ Generate a MARKDOWN TABLE in JAPANESE (日本語) EXCEPT for the reply texts:
    - Example sequence: "Great insight on [topic]! At Asakusa Pharmacy (Japan), we're also seeing this trend. We might be able to support your clinic with our Japanese medical supplies. Would love to exchange insights via DM if you're open to it."
 - **スパム対策版（超短縮・英語）**: Create an extremely short and casual version of the English reply (under 80 characters) to avoid SPAM filters. Keep it very brief like "Interesting! We send J-GMP medical supplies from Japan. DM me?"
 
-Include UP TO 15 actionable, VERIFIED REAL leads.
+Include UP TO 25 actionable, VERIFIED REAL leads.
 **[CRITICAL RECENT ACTIVITY RULE]**: The target account MUST have been active (posted or replied) within the last 3 months. Do NOT include dormant or inactive accounts.
-AIM FOR 15 carefully curated leads but do NOT pad the list with fake data if you find fewer. Handles are critical and MUST exist. 
+AIM FOR 25 carefully curated leads but do NOT pad the list with fake data if you find fewer. Handles are critical and MUST exist. 
 Only output the table and a one-sentence intro in Japanese. Do NOT use simplified Chinese in the output text."""
 
     print(f"  [SDK] {group_name} / {segment_name} のB2Bリード検索中（目標50件、最大30回ループ）...")
@@ -161,7 +161,7 @@ Only output the table and a one-sentence intro in Japanese. Do NOT use simplifie
     all_responses = []
     found_handles = set()
     total_valid_leads = 0
-    max_loops = 30
+    max_loops = 10
 
     for i in range(max_loops):
         print(f"  [SDK] ループ {i+1}/{max_loops} 実行中... (現在 {total_valid_leads}件 / 目標 50件)")
@@ -191,7 +191,6 @@ Do not repeat previous searches. Look for adjacent niches or less obvious B2B bu
             model="grok-4-1-fast-reasoning",
             tools=[
                 x_search(),
-                web_search(),
             ],
         )
         chat.append(user_msg(current_prompt))
