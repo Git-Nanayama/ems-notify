@@ -487,6 +487,10 @@ def send_email(subject, body_markdown, csv_filename="B2B_Leads.csv"):
 # メイン実行
 # ============================================================
 def main():
+    import sys
+    print("このスクリプト（Grok API経由のワークフロー）は現在無効化（停止）されています。")
+    sys.exit(0)
+    
     today = datetime.date.today().strftime("%Y/%m/%d")
     print(f"🚀 B2B Pharma Lead Generation Bot 起動 ({today})")
     print("=" * 60)
