@@ -1,0 +1,5 @@
+pandas
+biopython
+feedparser
+google-generativeai
+openpyxl
